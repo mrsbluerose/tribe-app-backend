@@ -7,6 +7,7 @@ import com.savvato.tribeapp.controllers.dto.CosignRequest;
 import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.services.ConnectService;
 import com.savvato.tribeapp.services.CosignService;
+import com.savvato.tribeapp.services.GenericResponseService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -33,6 +34,9 @@ public class ConnectAPIController {
 
   @Autowired
   CosignService cosignService;
+
+  @Autowired
+  GenericResponseService genericResponseService;
 
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<String> handleNoSuchElementException(NoSuchElementException ex) {
@@ -73,12 +77,10 @@ public class ConnectAPIController {
 
   @Connect
   @PostMapping
-  public boolean connect(@RequestBody @Valid ConnectRequest connectRequest) {
-    if (connectService.validateQRCode(connectRequest.qrcodePhrase, connectRequest.toBeConnectedWithUserId)) {
-      return connectService.saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
-    } else {
-      return false;
-    }
+  public ResponseEntity<GenericResponseDTO> connect(@RequestBody @Valid ConnectRequest connectRequest) {
+    Boolean connectStatus = connectService.connect(connectRequest);
+    GenericResponseDTO rtn = genericResponseService.createDTO(connectStatus);
+    return ResponseEntity.status(HttpStatus.OK).body(rtn);
   }
 
   @MessageMapping("/connect/room")

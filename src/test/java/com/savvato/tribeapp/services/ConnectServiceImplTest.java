@@ -7,6 +7,7 @@ import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
 import com.savvato.tribeapp.repositories.UserRepository;
+import liquibase.pro.packaged.U;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,6 +55,9 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
     @MockBean
     UserRepository userRepository;
 
+    @MockBean
+    UserService userService;
+
     @Test
     public void getQRCodeString() {
         Long userId = USER1_ID;
@@ -97,25 +101,63 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
     }
 
     @Test
-    public void saveConnectionDetailsWhenExistingConnectionWithReversedUserIdsExists() {
+    public void testValidateConnectionHappyPath() {
         Long requestingUserId = USER1_ID;
         Long toBeConnectedWithUserId = USER2_ID;
-        Connection existingConnection = new Connection(requestingUserId, toBeConnectedWithUserId);
-        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.of(existingConnection));
-        Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-        assertEquals(connectionStatus, false);
-        verify(connectionsRepository, never()).save(any());
+
+        when(userService.getLoggedInUserId()).thenReturn(USER1_ID);
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.empty());
+
+        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+
+        assertEquals(connectionStatus, true);
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(connectionsRepository, times(1)).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
 
     @Test
-    public void saveConnectionDetailsWhenIdsAreTheSame() {
+    public void testValidateConnectionWhenExistingConnectionWithReversedUserIdsExists() {
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        Connection existingConnection = new Connection(requestingUserId, toBeConnectedWithUserId);
+
+        when(userService.getLoggedInUserId()).thenReturn(USER1_ID);
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.of(existingConnection));
+
+        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+
+        assertEquals(connectionStatus, false);
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(connectionsRepository, times(1)).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
+    }
+
+    @Test
+    public void testValidateConnectionWhenIdsAreTheSame() {
         Long requestingUserId = USER2_ID;
         Long toBeConnectedWithUserId = USER2_ID;
-        Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-        assertEquals(connectionStatus, false);
 
+        when(userService.getLoggedInUserId()).thenReturn(USER2_ID);
+
+        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+
+        assertEquals(connectionStatus, false);
+        verify(userService, times(1)).getLoggedInUserId();
         verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
-        verify(connectionsRepository, never()).save(any());
+    }
+
+    @Test
+    public void testValidateConnectionWhenRequestingUserNotLoggedIn() {
+        Long loggedInUser = 3L;
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+
+        when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
+
+        Boolean connectionStatus = connectService.validateConnection(requestingUserId,toBeConnectedWithUserId);
+
+        assertEquals(connectionStatus, false);
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
@@ -19,6 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -426,6 +431,25 @@ public class UserServiceImplTest extends AbstractServiceImplTest {
         UsernameDTO usernameDTO = userService.getUsernameDTO(testId);
         assertEquals(usernameDTO.userId, expectedUsernameDTO.userId);
         assertEquals(usernameDTO.username, expectedUsernameDTO.username);
+    }
+
+    @Test
+    public void testGetLoggedInUser() {
+        // test data
+        Long testId = getUser1().getId();
+
+        // mock data
+        UserPrincipal mockUserPrincipal = new UserPrincipal(getUser1());
+        Authentication mockAuthentication = new UsernamePasswordAuthenticationToken(mockUserPrincipal, null);
+        SecurityContext mockSecurityContext = mock(SecurityContext.class);
+
+        // mock returns
+        when(mockSecurityContext.getAuthentication()).thenReturn(mockAuthentication);
+        SecurityContextHolder.setContext(mockSecurityContext);
+
+        // test
+        Long userId = userService.getLoggedInUserId();
+        assertEquals(testId, userId);
     }
     
     private Set<UserRoleDTO> getUserRoleDTOSet(User user) {

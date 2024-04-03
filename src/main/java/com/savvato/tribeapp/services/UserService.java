@@ -20,4 +20,6 @@ public interface UserService {
 	List<UserDTO> getAllUsers();
 
 	UsernameDTO getUsernameDTO(Long userId);
+
+    Long getLoggedInUserId();
 }

@@ -7,10 +7,7 @@ import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.controllers.dto.CosignRequest;
-import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
-import com.savvato.tribeapp.dto.CosignDTO;
-import com.savvato.tribeapp.dto.CosignsForUserDTO;
-import com.savvato.tribeapp.dto.UsernameDTO;
+import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.repositories.CosignRepository;
@@ -70,6 +67,9 @@ public class ConnectAPITest {
 
     @MockBean
     private CosignRepository repository;
+
+    @MockBean
+    private GenericResponseService genericResponseService;
 
     @Captor
     private ArgumentCaptor<Long> userIdCaptor;
@@ -150,11 +150,11 @@ public class ConnectAPITest {
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.validateQRCode(anyString(), anyLong())).thenReturn(true);
-        when(connectService.saveConnectionDetails(anyLong(), anyLong())).thenReturn(true);
-        ArgumentCaptor<Long> requestingUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> toBeConnectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<String> qrCodePhraseCaptor = ArgumentCaptor.forClass(String.class);
+        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(true);
+        when(genericResponseService.createDTO(anyBoolean())).thenReturn(GenericResponseDTO.builder().booleanMessage(true).build());
+
+        ArgumentCaptor<ConnectRequest> connectRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectRequest.class);
+
         this.mockMvc
                 .perform(
                         post("/api/connect")
@@ -163,13 +163,10 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("true"))
+                .andExpect(jsonPath("booleanMessage").value((true)))
                 .andReturn();
-        verify(connectService, times(1)).validateQRCode(qrCodePhraseCaptor.capture(), requestingUserIdCaptor.capture());
-        verify(connectService, times(1)).saveConnectionDetails(requestingUserIdCaptor.capture(), toBeConnectedWithUserIdCaptor.capture());
-        assertEquals(qrCodePhraseCaptor.getValue(), connectRequest.qrcodePhrase);
-        assertEquals(requestingUserIdCaptor.getValue(), connectRequest.requestingUserId);
-        assertEquals(toBeConnectedWithUserIdCaptor.getValue(), connectRequest.toBeConnectedWithUserId);
+        verify(connectService, times(1)).connect(connectRequestArgumentCaptor.capture());
+        assertThat(connectRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectRequest);
     }
 
     @Test
@@ -183,8 +180,9 @@ public class ConnectAPITest {
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.validateQRCode(anyString(), anyLong())).thenReturn(true);
-        when(connectService.saveConnectionDetails(anyLong(), anyLong())).thenReturn(false);
+        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(false);
+        when(genericResponseService.createDTO(anyBoolean())).thenReturn(GenericResponseDTO.builder().booleanMessage(false).build());
+
         this.mockMvc
                 .perform(
                         post("/api/connect")
@@ -193,41 +191,9 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("false"))
+                .andExpect(jsonPath("booleanMessage").value((false)))
                 .andReturn();
 
-    }
-
-
-
-    @Test
-    public void connectWhenQrCodeInvalid() throws Exception {
-        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
-                .thenReturn(new UserPrincipal(user));
-        String auth = AuthServiceImpl.generateAccessToken(user);
-        ConnectRequest connectRequest = new ConnectRequest();
-
-        connectRequest.requestingUserId = 1L;
-        connectRequest.toBeConnectedWithUserId = 2L;
-        connectRequest.qrcodePhrase = "invalid code";
-
-        when(connectService.validateQRCode(anyString(), anyLong())).thenReturn(false);
-        ArgumentCaptor<Long> toBeConnectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<String> qrCodePhraseCaptor = ArgumentCaptor.forClass(String.class);
-        this.mockMvc
-                .perform(
-                        post("/api/connect")
-                                .content(gson.toJson(connectRequest))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + auth)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"))
-                .andReturn();
-        verify(connectService, times(1)).validateQRCode(qrCodePhraseCaptor.capture(), toBeConnectedWithUserIdCaptor.capture());
-        verify(connectService, never()).saveConnectionDetails(any(), any());
-        assertEquals(qrCodePhraseCaptor.getValue(), connectRequest.qrcodePhrase);
-        assertEquals(toBeConnectedWithUserIdCaptor.getValue(), connectRequest.toBeConnectedWithUserId);
     }
 
     @Test
