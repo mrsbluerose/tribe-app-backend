@@ -2,7 +2,6 @@ package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
-import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
@@ -12,8 +11,6 @@ import com.savvato.tribeapp.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -24,9 +21,6 @@ public class ConnectServiceImpl implements ConnectService {
 
     @Autowired
     CacheService cache;
-
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
     ConnectionsRepository connectionsRepository;
@@ -102,85 +96,6 @@ public class ConnectServiceImpl implements ConnectService {
         genericResponseDTO.booleanMessage = saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
 
         return genericResponseDTO;
-    }
-
-    @Override
-    @MessageMapping("/connect/room")
-    public void connect(ConnectIncomingMessageDTO incoming) {
-        if (!validateQRCode(incoming.qrcodePhrase, incoming.toBeConnectedWithUserId)) {
-            ConnectOutgoingMessageDTO msg = ConnectOutgoingMessageDTO.builder()
-                    .connectionError(true)
-                    .message("Invalid QR code; failed to connect.")
-                    .build();
-            simpMessagingTemplate.convertAndSendToUser(
-                    String.valueOf(incoming.toBeConnectedWithUserId),
-                    "/connect/user/queue/specific-user",
-                    msg);
-        } else {
-            List<ConnectOutgoingMessageDTO> outgoingMsg = handleConnectionIntent(incoming.connectionIntent, incoming.requestingUserId, incoming.toBeConnectedWithUserId);
-            for (ConnectOutgoingMessageDTO dto : outgoingMsg) {
-                simpMessagingTemplate.convertAndSendToUser(
-                        String.valueOf(dto.to),
-                        "/connect/user/queue/specific-user",
-                        outgoingMsg);
-            }
-        }
-    }
-
-    @Override
-    public List<ConnectOutgoingMessageDTO> handleConnectionIntent(String connectionIntent, Long requestingUserId, Long toBeConnectedWithUserId) {
-        List<ConnectOutgoingMessageDTO> rtn = new ArrayList<>();
-        List<Long> allRecipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-
-        if (connectionIntent == "") {
-            rtn.add(ConnectOutgoingMessageDTO.builder()
-                    .message("Please confirm that you wish to connect.")
-                            .to(UsernameDTO.builder()
-                                    .userId(toBeConnectedWithUserId)
-                                    .username(userRepository.findById(toBeConnectedWithUserId).get().getName())
-                                    .build())
-                    .build());
-
-            return rtn;
-        } else if (connectionIntent == "confirmed") {
-            Boolean connectionStatus = saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-            for(Long id : allRecipients) {
-                if (connectionStatus) {
-                    rtn.add(ConnectOutgoingMessageDTO.builder()
-                            .connectionSuccess(true)
-                            .to(UsernameDTO.builder()
-                                    .userId(id)
-                                    .username(userRepository.findById(id).get().getName())
-                                    .build())
-                            .message("Successfully saved connection!")
-                            .build());
-                } else {
-                    rtn.add(ConnectOutgoingMessageDTO.builder()
-                            .connectionError(true)
-                            .to(UsernameDTO.builder()
-                                    .userId(id)
-                                    .username(userRepository.findById(id).get().getName())
-                                    .build())
-                            .message("Failed to save connection to database.")
-                            .build());
-                }
-            }
-        } else if (connectionIntent == "denied") {
-            for(Long id : allRecipients) {
-                rtn.add(ConnectOutgoingMessageDTO.builder()
-                        .connectionError(true)
-                        .to(UsernameDTO.builder()
-                                .userId(id)
-                                .username(userRepository.findById(id).get().getName())
-                                .build())
-                        .message("Connection request denied.")
-                        .build());
-            }
-        } else {
-            rtn = null;
-        }
-
-        return rtn;
     }
 
     @Override

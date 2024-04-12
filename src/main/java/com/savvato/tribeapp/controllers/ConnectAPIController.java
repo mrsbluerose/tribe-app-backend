@@ -87,11 +87,6 @@ public class ConnectAPIController {
     }
   }
 
-  @MessageMapping("/connect/room")
-  public void connect(@Payload ConnectIncomingMessageDTO incoming, @Header("simpSessionId") String sessionId) {
-      connectService.connect(incoming);
-  }
-
   @SaveCosign
   @PostMapping("/cosign")
   public ResponseEntity saveCosign(@RequestBody @Valid CosignRequest cosignRequest) {
