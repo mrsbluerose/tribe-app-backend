@@ -78,9 +78,13 @@ public class ConnectAPIController {
   @Connect
   @PostMapping
   public ResponseEntity<GenericResponseDTO> connect(@RequestBody @Valid ConnectRequest connectRequest) {
-    Boolean connectStatus = connectService.connect(connectRequest);
-    GenericResponseDTO rtn = genericResponseService.createDTO(connectStatus);
-    return ResponseEntity.status(HttpStatus.OK).body(rtn);
+    GenericResponseDTO connection = connectService.connect(connectRequest);
+
+    if(connection.booleanMessage) {
+      return ResponseEntity.status(HttpStatus.OK).body(connection);
+    } else {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(connection);
+    }
   }
 
   @MessageMapping("/connect/room")

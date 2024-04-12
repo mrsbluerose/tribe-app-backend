@@ -4,6 +4,7 @@ import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
@@ -35,6 +36,9 @@ public class ConnectServiceImpl implements ConnectService {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    GenericResponseService genericResponseService;
 
     private final int QRCODE_STRING_LENGTH = 12;
 
@@ -79,14 +83,25 @@ public class ConnectServiceImpl implements ConnectService {
     }
 
     @Override
-    public boolean connect(ConnectRequest connectRequest) {
+    public GenericResponseDTO connect(ConnectRequest connectRequest) {
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
+
         if (!validateQRCode(connectRequest.qrcodePhrase, connectRequest.toBeConnectedWithUserId)) {
-            return false;
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "Unable to validate QR code.";
+            return genericResponseDTO;
         }
-        if (!validateConnection(connectRequest.requestingUserId,connectRequest.toBeConnectedWithUserId)) {
-            return false;
+
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(connectRequest.requestingUserId,connectRequest.toBeConnectedWithUserId);
+
+        if (optValidateConnection.isPresent()) {
+            return optValidateConnection.get();
         }
-        return saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
+
+        genericResponseDTO.booleanMessage = saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
+
+        return genericResponseDTO;
     }
 
     @Override
@@ -199,26 +214,30 @@ public class ConnectServiceImpl implements ConnectService {
     }
 
     @Override
-    public Boolean validateConnection(Long requestingUserId, Long toBeConnectedWithUserId) {
+    public Optional<GenericResponseDTO> validateConnection(Long requestingUserId, Long toBeConnectedWithUserId) {
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
         Long loggedInUser = userService.getLoggedInUserId();
 
         if (!loggedInUser.equals(requestingUserId)) {
-            log.error("The logged in user (" + loggedInUser + ") does not match issuing user (" + requestingUserId + ")");
-            return false;
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "The logged in user (" + loggedInUser + ") does not match issuing user (" + requestingUserId + ")";
+            return Optional.of(genericResponseDTO);
         }
 
         if (requestingUserId.equals(toBeConnectedWithUserId)) {
-            log.error("User " + requestingUserId + " may not connect with themselves");
-            return false;
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "User " + requestingUserId + " may not connect with themselves";
+            return Optional.of(genericResponseDTO);
         }
 
         Optional<Connection> existingConnectionWithReversedIds = connectionsRepository.findExistingConnectionWithReversedUserIds(requestingUserId, toBeConnectedWithUserId);
 
         if (existingConnectionWithReversedIds.isPresent()) {
-            log.error("This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId);
-            return false;
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId;
+            return Optional.of(genericResponseDTO);
         }
 
-        return true;
+        return Optional.empty();
     }
 }

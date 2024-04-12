@@ -4,6 +4,7 @@ import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public interface ConnectService {
 
     boolean saveConnectionDetails(Long requestingUserId, Long toBeConnectedWithUserId);
 
-    boolean connect(ConnectRequest connectRequest);
+    GenericResponseDTO connect(ConnectRequest connectRequest);
 
     @MessageMapping("/connect/room")
     void connect(ConnectIncomingMessageDTO incoming);
@@ -31,5 +32,5 @@ public interface ConnectService {
 
     boolean removeConnection(ConnectionRemovalRequest connectionDeleteRequest);
 
-    Boolean validateConnection(Long requestingUserId, Long toBeConnectedWithUserId);
+    Optional<GenericResponseDTO> validateConnection(Long requestingUserId, Long toBeConnectedWithUserId);
 }

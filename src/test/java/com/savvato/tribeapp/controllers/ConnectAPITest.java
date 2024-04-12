@@ -145,13 +145,15 @@ public class ConnectAPITest {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
         ConnectRequest connectRequest = new ConnectRequest();
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
 
         connectRequest.requestingUserId = 1L;
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(true);
-        when(genericResponseService.createDTO(anyBoolean())).thenReturn(GenericResponseDTO.builder().booleanMessage(true).build());
+        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(expectedGenericResponseDTO);
 
         ArgumentCaptor<ConnectRequest> connectRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectRequest.class);
 
@@ -175,13 +177,16 @@ public class ConnectAPITest {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
         ConnectRequest connectRequest = new ConnectRequest();
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("response message")
+                .build();
 
         connectRequest.requestingUserId = 1L;
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(false);
-        when(genericResponseService.createDTO(anyBoolean())).thenReturn(GenericResponseDTO.builder().booleanMessage(false).build());
+        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(expectedGenericResponseDTO);
 
         this.mockMvc
                 .perform(
@@ -190,8 +195,9 @@ public class ConnectAPITest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("booleanMessage").value((false)))
+                .andExpect(jsonPath("responseMessage").value(("response message")))
                 .andReturn();
 
     }

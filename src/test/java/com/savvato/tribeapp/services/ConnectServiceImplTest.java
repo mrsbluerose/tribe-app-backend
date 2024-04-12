@@ -4,6 +4,7 @@ import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
 import com.savvato.tribeapp.repositories.UserRepository;
@@ -58,6 +59,9 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
     @MockBean
     UserService userService;
 
+    @MockBean
+    GenericResponseService genericResponseService;
+
     @Test
     public void getQRCodeString() {
         Long userId = USER1_ID;
@@ -108,9 +112,9 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         when(userService.getLoggedInUserId()).thenReturn(USER1_ID);
         when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.empty());
 
-        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
 
-        assertEquals(connectionStatus, true);
+        assertThat(validateConnection.isEmpty());
         verify(userService, times(1)).getLoggedInUserId();
         verify(connectionsRepository, times(1)).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
@@ -120,13 +124,17 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         Long requestingUserId = USER1_ID;
         Long toBeConnectedWithUserId = USER2_ID;
         Connection existingConnection = new Connection(requestingUserId, toBeConnectedWithUserId);
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId)
+                .build();
 
         when(userService.getLoggedInUserId()).thenReturn(USER1_ID);
         when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.of(existingConnection));
 
-        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
 
-        assertEquals(connectionStatus, false);
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(validateConnection.get());
         verify(userService, times(1)).getLoggedInUserId();
         verify(connectionsRepository, times(1)).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
@@ -135,12 +143,16 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
     public void testValidateConnectionWhenIdsAreTheSame() {
         Long requestingUserId = USER2_ID;
         Long toBeConnectedWithUserId = USER2_ID;
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("User " + requestingUserId + " may not connect with themselves")
+                .build();
 
         when(userService.getLoggedInUserId()).thenReturn(USER2_ID);
 
-        Boolean connectionStatus = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
 
-        assertEquals(connectionStatus, false);
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(validateConnection.get());
         verify(userService, times(1)).getLoggedInUserId();
         verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
@@ -150,12 +162,16 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         Long loggedInUser = 3L;
         Long requestingUserId = USER1_ID;
         Long toBeConnectedWithUserId = USER2_ID;
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("The logged in user (" + loggedInUser + ") does not match issuing user (" + requestingUserId + ")")
+                .build();
 
         when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
 
-        Boolean connectionStatus = connectService.validateConnection(requestingUserId,toBeConnectedWithUserId);
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId,toBeConnectedWithUserId);
 
-        assertEquals(connectionStatus, false);
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(validateConnection.get());
         verify(userService, times(1)).getLoggedInUserId();
         verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
     }
