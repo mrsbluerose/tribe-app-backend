@@ -92,16 +92,13 @@ public class ConnectAPIController {
   @PostMapping("/cosign")
   public ResponseEntity saveCosign(@RequestBody @Valid CosignRequest cosignRequest) {
 
-    Optional<CosignDTO> opt = cosignService.saveCosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
+    Optional opt = cosignService.cosign(cosignRequest);
 
-    if(opt.isEmpty()) {
-      log.error("Users may not cosign themselves. ");
-      GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
-              .responseMessage("Users may not cosign themselves.")
-              .build();
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(genericResponseDTO);
+    if(opt.get() instanceof GenericResponseDTO) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(opt.get());
     }
-      return ResponseEntity.status(HttpStatus.OK).body(opt.get());
+
+    return ResponseEntity.status(HttpStatus.OK).body(opt.get());
   }
   @DeleteCosign
   @DeleteMapping("/cosign")

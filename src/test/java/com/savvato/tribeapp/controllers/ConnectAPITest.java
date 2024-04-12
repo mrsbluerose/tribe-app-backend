@@ -216,7 +216,7 @@ public class ConnectAPITest {
         cosignRequest.userIdReceiving = testUserIdReceiving;
         cosignRequest.phraseId = testPhraseId;
 
-        when(cosignService.saveCosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.of(mockCosignDTO));
+        when(cosignService.cosign(Mockito.any())).thenReturn(Optional.of(mockCosignDTO));
 
         this.mockMvc
                 .perform(
@@ -231,7 +231,7 @@ public class ConnectAPITest {
     }
 
     @Test
-    public void saveCosignSadPathUserCosignsThemselves() throws Exception {
+    public void saveCosignSadPath() throws Exception {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
@@ -245,7 +245,12 @@ public class ConnectAPITest {
         cosignRequest.userIdReceiving = testUserIdReceiving;
         cosignRequest.phraseId = testPhraseId;
 
-        when(cosignService.saveCosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.empty());
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("response message")
+                .build();
+
+        when(cosignService.cosign(Mockito.any())).thenReturn(Optional.of(expectedGenericResponseDTO));
 
         this.mockMvc
                 .perform(
@@ -255,7 +260,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().json("{\"responseMessage\":\"Users may not cosign themselves.\"}"));
+                .andExpect(content().json("{\"responseMessage\":\"response message\", \"booleanMessage\":false}"));
     }
 
     public void removeConnectionHappyPath() throws Exception {

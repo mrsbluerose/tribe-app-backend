@@ -1,7 +1,10 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.controllers.dto.ConnectRequest;
+import com.savvato.tribeapp.controllers.dto.CosignRequest;
 import com.savvato.tribeapp.dto.CosignDTO;
 import com.savvato.tribeapp.dto.CosignsForUserDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.Cosign;
 import com.savvato.tribeapp.repositories.CosignRepository;
@@ -20,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
@@ -43,6 +47,9 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
 
     @MockBean
     UserService userService;
+
+    @MockBean
+    GenericResponseService genericResponseService;
 
     @Test
     public void saveCosign() {
@@ -93,18 +100,6 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         Optional<CosignDTO> CosignDTORepeat = cosignService.saveCosign(userIdIssuing, userIdReceiving, phraseId);
 
         assertThat(CosignDTORepeat.get()).usingRecursiveComparison().isEqualTo(expectedCosignDTO);
-    }
-
-    @Test
-    public void saveCosignFailsWhenIdsEqual() {
-        Long testUserIdIssuing = 1L;
-        Long testUserIdReceiving = 1L;
-        Long testPhraseId = 1L;
-
-        Optional<CosignDTO> cosignDTO = cosignService.saveCosign(testUserIdIssuing, testUserIdReceiving, testPhraseId);
-
-        verify(cosignRepository, never()).save(Mockito.any());
-        assertThat(cosignDTO).usingRecursiveComparison().isEqualTo(Optional.empty());
     }
 
     @Test
@@ -342,4 +337,105 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         }
         return list;
     }
+
+    @Test
+    public void testValidateCosignersWhenCosignersAreValid() {
+        Long loggedInUser = USER1_ID;
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+
+        when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
+
+        Optional<GenericResponseDTO> opt = cosignService.validateCosigners(userIdIssuing,userIdReceiving);
+        assertTrue(opt.isEmpty());
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(genericResponseService,times(0)).createDTO(anyString());
+    }
+
+    @Test
+    public void testValidateCosignersWhenIssuingUserNotLoggedIn() {
+        Long loggedInUser = 3L;
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .responseMessage("The logged in user (" + loggedInUser + ") does not match issuing user (" + userIdIssuing + ")")
+                .build();
+
+        when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
+        when(genericResponseService.createDTO(anyString())).thenReturn(expectedDTO);
+
+        Optional<GenericResponseDTO> opt = cosignService.validateCosigners(userIdIssuing,userIdReceiving);
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(opt.get());
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(genericResponseService,times(1)).createDTO(anyString());
+    }
+
+    @Test
+    public void testValidateCosignersWhenIssuingUserCosigningSelf() {
+        Long loggedInUser = USER1_ID;
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER1_ID;
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .responseMessage("User " + userIdIssuing + " may not cosign themselves.")
+                .build();
+
+        when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
+        when(genericResponseService.createDTO(anyString())).thenReturn(expectedDTO);
+
+        Optional<GenericResponseDTO> opt = cosignService.validateCosigners(userIdIssuing,userIdReceiving);
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(opt.get());
+        verify(userService, times(1)).getLoggedInUserId();
+        verify(genericResponseService,times(1)).createDTO(anyString());
+    }
+
+    @Test
+    public void testCosignHappyPath() {
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseId = PHRASE1_ID;
+
+        CosignRequest cosignRequest = new CosignRequest();
+        cosignRequest.userIdIssuing = userIdIssuing;
+        cosignRequest.userIdReceiving = userIdReceiving;
+        cosignRequest.phraseId = phraseId;
+
+        CosignDTO expectedCosignDTO = CosignDTO.builder()
+                .userIdIssuing(userIdIssuing)
+                .userIdReceiving(userIdReceiving)
+                .phraseId(phraseId)
+                .build();
+
+        CosignService cosignServiceSpy = spy(cosignService);
+        doReturn(Optional.empty()).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
+        doReturn(Optional.of(expectedCosignDTO)).when(cosignServiceSpy).saveCosign(Mockito.any(), Mockito.any(), Mockito.any());
+
+        Optional opt = cosignServiceSpy.cosign(cosignRequest);
+        assertThat(expectedCosignDTO).usingRecursiveComparison().isEqualTo(opt.get());
+    }
+
+    @Test
+    public void testCosignSadPath() {
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseId = PHRASE1_ID;
+
+        CosignRequest cosignRequest = new CosignRequest();
+        cosignRequest.userIdIssuing = userIdIssuing;
+        cosignRequest.userIdReceiving = userIdReceiving;
+        cosignRequest.phraseId = phraseId;
+
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("response message")
+                .build();
+
+        CosignService cosignServiceSpy = spy(cosignService);
+        doReturn(Optional.of(expectedGenericResponseDTO)).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
+
+        Optional opt = cosignServiceSpy.cosign(cosignRequest);
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(opt.get());
+        verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
+        verify(cosignServiceSpy, times(0)).saveCosign(anyLong(),anyLong(),anyLong());
+    }
+
 }
