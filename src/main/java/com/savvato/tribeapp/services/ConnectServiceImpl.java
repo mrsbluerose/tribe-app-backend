@@ -33,9 +33,6 @@ public class ConnectServiceImpl implements ConnectService {
     @Autowired
     UserService userService;
 
-    @Autowired
-    GenericResponseService genericResponseService;
-
     private final int QRCODE_STRING_LENGTH = 12;
 
     public Optional<String> getQRCodeString(long userId) {
@@ -95,6 +92,16 @@ public class ConnectServiceImpl implements ConnectService {
             return optValidateConnection.get();
         }
 
+        Optional<Connection> existingConnectionWithReversedIds =
+                connectionsRepository.findExistingConnectionWithReversedUserIds(connectRequest.requestingUserId,
+                        connectRequest.toBeConnectedWithUserId);
+
+        if (existingConnectionWithReversedIds.isPresent()) {
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + connectRequest.requestingUserId + " and the to be connected with user " + connectRequest.toBeConnectedWithUserId;
+            return genericResponseDTO;
+        }
+
         genericResponseDTO.booleanMessage = saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
 
         return genericResponseDTO;
@@ -134,17 +141,25 @@ public class ConnectServiceImpl implements ConnectService {
 
         return outgoingMessages;
     }
+    @Override
+    public GenericResponseDTO removeConnection(ConnectionRemovalRequest connectionRemovalRequest) {
 
-    public boolean removeConnection(ConnectionRemovalRequest connectionRemovalRequest) {
-        if (Objects.equals(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId)) {
-            return false;
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(connectionRemovalRequest.requestingUserId,  connectionRemovalRequest.connectedWithUserId);
+
+        if (optValidateConnection.isPresent()) {
+            return optValidateConnection.get();
         }
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
+
         try {
             connectionsRepository.removeConnection(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId);
-            return true;
+            genericResponseDTO.booleanMessage = true;
         } catch (Exception e) {
-            return false;
+            genericResponseDTO.booleanMessage = false;
         }
+
+        return genericResponseDTO;
     }
 
     @Override
@@ -154,21 +169,15 @@ public class ConnectServiceImpl implements ConnectService {
 
         if (!loggedInUser.equals(requestingUserId)) {
             genericResponseDTO.booleanMessage = false;
-            genericResponseDTO.responseMessage = "The logged in user (" + loggedInUser + ") does not match issuing user (" + requestingUserId + ")";
+            genericResponseDTO.responseMessage =
+                    "The logged in user (" + loggedInUser + ") does not match requesting user (" + requestingUserId +
+                            ")";
             return Optional.of(genericResponseDTO);
         }
 
         if (requestingUserId.equals(toBeConnectedWithUserId)) {
             genericResponseDTO.booleanMessage = false;
-            genericResponseDTO.responseMessage = "User " + requestingUserId + " may not connect with themselves";
-            return Optional.of(genericResponseDTO);
-        }
-
-        Optional<Connection> existingConnectionWithReversedIds = connectionsRepository.findExistingConnectionWithReversedUserIds(requestingUserId, toBeConnectedWithUserId);
-
-        if (existingConnectionWithReversedIds.isPresent()) {
-            genericResponseDTO.booleanMessage = false;
-            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId;
+            genericResponseDTO.responseMessage = "User " + requestingUserId + " may not have a connection to themselves";
             return Optional.of(genericResponseDTO);
         }
 

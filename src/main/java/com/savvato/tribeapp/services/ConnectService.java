@@ -22,7 +22,7 @@ public interface ConnectService {
 
     GenericResponseDTO connect(ConnectRequest connectRequest);
 
-    boolean removeConnection(ConnectionRemovalRequest connectionDeleteRequest);
+    GenericResponseDTO removeConnection(ConnectionRemovalRequest connectionDeleteRequest);
 
     Optional<GenericResponseDTO> validateConnection(Long requestingUserId, Long toBeConnectedWithUserId);
 }

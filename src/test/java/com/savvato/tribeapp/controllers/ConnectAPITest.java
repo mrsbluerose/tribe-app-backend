@@ -268,57 +268,7 @@ public class ConnectAPITest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json("{\"responseMessage\":\"response message\", \"booleanMessage\":false}"));
     }
-
-    public void removeConnectionHappyPath() throws Exception {
-        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
-                .thenReturn(new UserPrincipal(user));
-        String auth = AuthServiceImpl.generateAccessToken(user);
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = 1L;
-        connectionDeleteRequest.connectedWithUserId = 2L;
-        when(connectService.removeConnection(any())).thenReturn(true);
-        ArgumentCaptor<ConnectionRemovalRequest> connectionDeleteRequestCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
-        this.mockMvc
-                .perform(
-                        delete("/api/connect")
-                                .content(gson.toJson(connectionDeleteRequest))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + auth)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"))
-                .andReturn();
-        verify(connectService, times(1)).removeConnection(connectionDeleteRequestCaptor.capture());
-        assertThat(connectionDeleteRequestCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionDeleteRequest);
-
-    }
-
-//    @Test
-    public void removeConnectionWhenRemovalUnsuccessful() throws Exception {
-        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
-                .thenReturn(new UserPrincipal(user));
-        String auth = AuthServiceImpl.generateAccessToken(user);
-
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = 1L;
-        connectionDeleteRequest.connectedWithUserId = 2L;
-        when(connectService.removeConnection(any())).thenReturn(false);
-        ArgumentCaptor<ConnectionRemovalRequest> connectionDeleteRequestCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
-        this.mockMvc
-                .perform(
-                        delete("/api/connect")
-                                .content(gson.toJson(connectionDeleteRequest))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + auth)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("false"))
-                .andReturn();
-        verify(connectService, times(1)).removeConnection(connectionDeleteRequestCaptor.capture());
-        assertThat(connectionDeleteRequestCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionDeleteRequest);
-
-    }
-
+    
     @Test
     public void testGetConnectionsHappyPath() throws Exception {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
