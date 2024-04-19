@@ -4,6 +4,7 @@ import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
+import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
 import com.savvato.tribeapp.repositories.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import com.savvato.tribeapp.constants.Constants;
 
 import java.util.*;
 
@@ -220,25 +222,51 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
     @Test
     public void testGetAllConnectionsForAUserWhenConnectionsExist() {
-        Long toBeConnectedUserId = USER2_ID;
+        // mock data
+        Long user1 = USER1_ID;
+        Long user2 = USER2_ID;
 
-        Connection connection = new Connection();
-        connection.setCreated();
-        connection.setRequestingUserId(USER1_ID);
-        connection.setToBeConnectedWithUserId(toBeConnectedUserId);
+        Connection whenUser1AsToBeConnectedWith = new Connection();
+        whenUser1AsToBeConnectedWith.setCreated();
+        whenUser1AsToBeConnectedWith.setRequestingUserId(user2);
+        whenUser1AsToBeConnectedWith.setToBeConnectedWithUserId(user1);
 
-        when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(List.of(connection));
+        Connection whenUser1AsRequesting = new Connection();
+        whenUser1AsRequesting.setCreated();
+        whenUser1AsRequesting.setRequestingUserId(user1);
+        whenUser1AsRequesting.setToBeConnectedWithUserId(user2);
 
         List<ConnectOutgoingMessageDTO> expectedOutgoingMessageDTOS = new ArrayList<>();
-        ConnectOutgoingMessageDTO outgoingMessage = ConnectOutgoingMessageDTO.builder()
+
+        ConnectOutgoingMessageDTO outgoingMessageWhenUser1IsToBeConnectedWith = ConnectOutgoingMessageDTO.builder()
                 .connectionSuccess(true)
-                .to(getUsernameDTOForUserID(connection.getRequestingUserId()))
+                .to(UsernameConnectionStatusDTO.builder()
+                        .userId(user2)
+                        .username(USER2_NAME)
+                        .userConnectionStatus(Constants.REQUESTING_USER)
+                        .build())
                 .message("")
                 .build();
-        expectedOutgoingMessageDTOS.add(outgoingMessage);
+        expectedOutgoingMessageDTOS.add(outgoingMessageWhenUser1IsToBeConnectedWith);
 
-        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(getUser1())).thenReturn(Optional.of(getUser2()));
-        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(toBeConnectedUserId);
+        ConnectOutgoingMessageDTO outGoingMessageWhenUser1IsRequesting = ConnectOutgoingMessageDTO.builder()
+                .connectionSuccess(true)
+                .to(UsernameConnectionStatusDTO.builder()
+                        .userId(user2)
+                        .username(USER2_NAME)
+                        .userConnectionStatus(Constants.TO_BE_CONNECTED_WITH_USER)
+                        .build())
+                .message("")
+                .build();
+        expectedOutgoingMessageDTOS.add(outGoingMessageWhenUser1IsRequesting);
+
+        // mock returns
+        when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(List.of(whenUser1AsToBeConnectedWith));
+        when(connectionsRepository.findAllByRequestingUserId(anyLong())).thenReturn(List.of(whenUser1AsRequesting));
+        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(getUser2())).thenReturn(Optional.of(getUser2()));
+
+        // test
+        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(user1);
 
         assertThat(actualMessageDTOs).usingRecursiveComparison().isEqualTo(expectedOutgoingMessageDTOS);
 
@@ -246,14 +274,17 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
     @Test
     public void testGetAllConnectionsForAUserWhenConnectionsDoNotExist() {
-        Long toBeConnectedUserId = USER2_ID;
+        Long User1 = USER1_ID;
 
         when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(Collections.emptyList());
+        when(connectionsRepository.findAllByRequestingUserId(anyLong())).thenReturn(Collections.emptyList());
 
-        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(toBeConnectedUserId);
+        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(User1);
 
         assertThat(actualMessageDTOs).usingRecursiveComparison().isEqualTo(Collections.emptyList());
-
+        verify(connectionsRepository, times(1)).findAllByToBeConnectedWithUserId(anyLong());
+        verify(connectionsRepository, times(1)).findAllByRequestingUserId(anyLong());
+        verify(userRepository, times(0)).findById(anyLong());
     }
 
     @Test

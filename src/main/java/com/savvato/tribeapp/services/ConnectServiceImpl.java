@@ -1,9 +1,11 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
+import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
@@ -100,19 +102,36 @@ public class ConnectServiceImpl implements ConnectService {
 
     @Override
     public List<ConnectOutgoingMessageDTO> getAllConnectionsForAUser(Long userId) {
-        List<Connection> connections = connectionsRepository.findAllByToBeConnectedWithUserId(userId);
         List<ConnectOutgoingMessageDTO> outgoingMessages = new ArrayList<>();
-        for (Connection connection : connections) {
+
+        List<Connection> connectionsWhenUserIsToBeConnectedWith = connectionsRepository.findAllByToBeConnectedWithUserId(userId);
+        for (Connection connection : connectionsWhenUserIsToBeConnectedWith) {
             ConnectOutgoingMessageDTO outgoingMessage = ConnectOutgoingMessageDTO.builder()
                     .connectionSuccess(true)
-                    .to(UsernameDTO.builder()
+                    .to(UsernameConnectionStatusDTO.builder()
                             .userId(connection.getRequestingUserId())
                             .username(userRepository.findById(connection.getRequestingUserId()).get().getName())
+                            .userConnectionStatus(Constants.REQUESTING_USER)
                             .build())
                     .message("")
                     .build();
             outgoingMessages.add(outgoingMessage);
         }
+
+        List<Connection> connectionsWhenUserIsRequestingConnection = connectionsRepository.findAllByRequestingUserId(userId);
+        for (Connection connection : connectionsWhenUserIsRequestingConnection) {
+            ConnectOutgoingMessageDTO outgoingMessageDTO = ConnectOutgoingMessageDTO.builder()
+                    .connectionSuccess(true)
+                    .to(UsernameConnectionStatusDTO.builder()
+                            .userId(connection.getToBeConnectedWithUserId())
+                            .username(userRepository.findById(connection.getToBeConnectedWithUserId()).get().getName())
+                            .userConnectionStatus(Constants.TO_BE_CONNECTED_WITH_USER)
+                            .build())
+                    .message("")
+                    .build();
+            outgoingMessages.add(outgoingMessageDTO);
+        }
+
         return outgoingMessages;
     }
 

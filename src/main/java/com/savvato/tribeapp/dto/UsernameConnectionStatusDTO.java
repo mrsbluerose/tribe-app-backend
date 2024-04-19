@@ -6,11 +6,9 @@ import lombok.experimental.SuperBuilder;
 
 @Getter
 @SuperBuilder
-public class UsernameDTO {
-  @Schema(example = "1")
-  public Long userId;
+public class UsernameConnectionStatusDTO extends UsernameDTO {
 
-  @Schema(example = "John Doe")
-  public String username;
+    @Schema(example = "receiving user")
+    public String userConnectionStatus;
 
 }

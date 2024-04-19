@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface ConnectionsRepository extends CrudRepository<Connection, Long> {
     List<Connection> findAllByToBeConnectedWithUserId(Long toBeConnectedWithUserId);
 
+    List<Connection> findAllByRequestingUserId(Long requestingUserId);
+
     @Query(nativeQuery = true, value = "delete from connections where requesting_user_id=?1 AND to_be_connected_with_user_id=?2")
     void removeConnection(Long requestingUserId, Long connectedWithUserId);
 
