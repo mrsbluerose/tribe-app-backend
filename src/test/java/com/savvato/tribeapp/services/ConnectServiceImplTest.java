@@ -1,6 +1,7 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
+import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
@@ -326,5 +327,102 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         when(cacheService.get(any(), any())).thenReturn(null);
         boolean isValidQRCode = connectService.validateQRCode(qrcodePhrase, userId);
         assertFalse(isValidQRCode);
+    }
+
+    @Test
+    public void testConnectInvalidQRcode() {
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+            .booleanMessage(false)
+            .responseMessage("Unable to validate QR code.")
+                .build();
+
+        ConnectRequest connectRequest = new ConnectRequest();
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
+        connectRequest.qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(false).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+
+        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectServiceSpy, never()).validateConnection(anyLong(),anyLong());
+        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(),anyLong());
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectInvalidConnection(){
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("message")
+                .build();
+
+        ConnectRequest connectRequest = new ConnectRequest();
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
+        connectRequest.qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.of(genericResponseDTO)).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+
+        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(),anyLong());
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectExistingConnectionWithReverseIds(){
+        ConnectRequest connectRequest = new ConnectRequest();
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
+        connectRequest.qrcodePhrase = "test";
+
+        Connection existingConnection = new Connection();
+        existingConnection.setRequestingUserId(USER2_ID);
+        existingConnection.setToBeConnectedWithUserId((USER1_ID));
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("This connection already exists in reverse between the requesting user " + connectRequest.requestingUserId + " and the to be connected with user " + connectRequest.toBeConnectedWithUserId)
+                .build();
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.of(existingConnection));
+
+        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectHappyPath(){
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
+
+        ConnectRequest connectRequest = new ConnectRequest();
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
+        connectRequest.qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.empty());
+
+        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+
     }
 }
