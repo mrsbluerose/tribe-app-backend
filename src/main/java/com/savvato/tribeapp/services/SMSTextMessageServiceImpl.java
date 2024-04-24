@@ -27,27 +27,27 @@ public class SMSTextMessageServiceImpl implements SMSTextMessageService {
     @Value("${PLIVO_SMS_AUTH_TOKEN}")
     private String SMS_API_AUTH_TOKEN;
 
-    @Generated
-    @Bean
-    public PlivoClient plivoClient() {
-        return new PlivoClient(SMS_API_AUTH_ID, SMS_API_AUTH_TOKEN);
-    }
+//    @Generated
+//    @Bean
+//    public PlivoClient plivoClient() {
+//        return new PlivoClient(SMS_API_AUTH_ID, SMS_API_AUTH_TOKEN);
+//    }
 
-    @Autowired
-    PlivoClient plivoClient;
+//    @Autowired
+//    PlivoClient plivoClient;
 
     public Optional<MessageCreateResponse> createResponse(String toPhoneNumber, String msg) {
-        try {
-            MessageCreateResponse response =
-                    Message.creator("19342227693", toPhoneNumber, msg).client(plivoClient).create();
-            return Optional.of(response);
-        } catch (PlivoRestException plivoRestException) {
-            log.debug(
-                    "PlivoRestException occurred when trying to create response: "
-                            + plivoRestException.getMessage());
-        } catch (IOException ioException) {
-            log.debug("IOException occurred when trying to create response: " + ioException.getMessage());
-        }
+//        try {
+//            MessageCreateResponse response =
+//                    Message.creator("19342227693", toPhoneNumber, msg).client(plivoClient).create();
+//            return Optional.of(response);
+//        } catch (PlivoRestException plivoRestException) {
+//            log.debug(
+//                    "PlivoRestException occurred when trying to create response: "
+//                            + plivoRestException.getMessage());
+//        } catch (IOException ioException) {
+//            log.debug("IOException occurred when trying to create response: " + ioException.getMessage());
+//        }
         return Optional.empty();
     }
 
