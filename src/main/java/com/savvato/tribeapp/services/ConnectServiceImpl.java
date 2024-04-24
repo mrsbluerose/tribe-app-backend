@@ -153,10 +153,13 @@ public class ConnectServiceImpl implements ConnectService {
         GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
 
         try {
-            connectionsRepository.removeConnection(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId);
+            Connection connection = new Connection(connectionRemovalRequest.requestingUserId,
+                    connectionRemovalRequest.connectedWithUserId);
+            connectionsRepository.delete(connection);
             genericResponseDTO.booleanMessage = true;
         } catch (Exception e) {
             genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = e.getMessage();
         }
 
         return genericResponseDTO;

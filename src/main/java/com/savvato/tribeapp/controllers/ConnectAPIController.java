@@ -3,6 +3,7 @@ package com.savvato.tribeapp.controllers;
 import com.savvato.tribeapp.controllers.annotations.controllers.ConnectAPIController.*;
 import com.savvato.tribeapp.controllers.annotations.responses.BadRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
+import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.controllers.dto.CosignRequest;
 import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.services.ConnectService;
@@ -85,6 +86,19 @@ public class ConnectAPIController {
     } else {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(connection);
     }
+  }
+
+  @RemoveConnection
+  @DeleteMapping
+  public ResponseEntity<GenericResponseDTO> removeConnection(@RequestBody @Valid ConnectionRemovalRequest connectionRemovalRequest) {
+    GenericResponseDTO rtn = connectService.removeConnection(connectionRemovalRequest);
+
+    if (rtn.booleanMessage) {
+      return ResponseEntity.ok().body(rtn);
+    } else {
+      return ResponseEntity.badRequest().body(rtn);
+    }
+    
   }
 
   @SaveCosign

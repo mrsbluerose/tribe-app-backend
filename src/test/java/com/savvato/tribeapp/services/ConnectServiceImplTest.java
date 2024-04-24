@@ -176,17 +176,16 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
-        doNothing().when(connectionsRepository).removeConnection(anyLong(), anyLong());
+        doNothing().when(connectionsRepository).delete(Mockito.any());
 
-        ArgumentCaptor<Long> requestingUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> connectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Connection> connectionCaptor = ArgumentCaptor.forClass(Connection.class);
 
         GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionDeleteRequest);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
-        verify(connectionsRepository, times(1)).removeConnection(requestingUserIdCaptor.capture(), connectedWithUserIdCaptor.capture());
-        assertEquals(requestingUserIdCaptor.getValue(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectedWithUserIdCaptor.getValue(), connectionDeleteRequest.connectedWithUserId);
+        verify(connectionsRepository, times(1)).delete(connectionCaptor.capture());
+        assertEquals(connectionCaptor.getValue().getRequestingUserId(), connectionDeleteRequest.requestingUserId);
+        assertEquals(connectionCaptor.getValue().getToBeConnectedWithUserId(), connectionDeleteRequest.connectedWithUserId);
     }
 
     @Test
@@ -196,23 +195,23 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         connectionDeleteRequest.connectedWithUserId = USER2_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .responseMessage("Database delete failed.")
                 .booleanMessage(false)
                 .build();
 
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
 
-        doThrow(new IllegalArgumentException("Database delete failed.")).when(connectionsRepository).removeConnection(anyLong(), anyLong());
+        doThrow(new IllegalArgumentException("Database delete failed.")).when(connectionsRepository).delete(Mockito.any());
 
-        ArgumentCaptor<Long> requestingUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> connectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Connection> connectionArgumentCaptor = ArgumentCaptor.forClass(Connection.class);
 
         GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionDeleteRequest);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
-        verify(connectionsRepository, times(1)).removeConnection(requestingUserIdCaptor.capture(), connectedWithUserIdCaptor.capture());
-        assertEquals(requestingUserIdCaptor.getValue(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectedWithUserIdCaptor.getValue(), connectionDeleteRequest.connectedWithUserId);
+        verify(connectionsRepository, times(1)).delete(connectionArgumentCaptor.capture());
+        assertEquals(connectionArgumentCaptor.getValue().getRequestingUserId(), connectionDeleteRequest.requestingUserId);
+        assertEquals(connectionArgumentCaptor.getValue().getToBeConnectedWithUserId(), connectionDeleteRequest.connectedWithUserId);
     }
 
     @Test
@@ -232,7 +231,7 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionRemovalRequest);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
-        verify(connectionsRepository, never()).removeConnection(anyLong(), anyLong());
+        verify(connectionsRepository, never()).delete(Mockito.any());
     }
 
     @Test

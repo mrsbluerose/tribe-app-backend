@@ -332,6 +332,75 @@ public class ConnectAPITest {
     }
 
     @Test
+    public void removeConnectionHappyPath() throws Exception {
+        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
+        connectionRemovalRequest.requestingUserId = 1L;
+        connectionRemovalRequest.connectedWithUserId = 2L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
+
+        when(connectService.removeConnection(any())).thenReturn(expectedDTO);
+        ArgumentCaptor<ConnectionRemovalRequest> connectionRemovalRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
+
+        this.mockMvc
+                .perform(
+                        delete("/api/connect")
+                                .content(gson.toJson(connectionRemovalRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + auth)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("booleanMessage").value((true)))
+                .andReturn();
+
+        verify(connectService, times(1)).removeConnection(connectionRemovalRequestArgumentCaptor.capture());
+        assertThat(connectionRemovalRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionRemovalRequest);
+
+    }
+
+    @Test
+    public void removeConnectionWhenRemovalUnsuccessful() throws Exception {
+        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
+        connectionRemovalRequest.requestingUserId = 1L;
+        connectionRemovalRequest.connectedWithUserId = 2L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("message")
+                .build();
+
+        when(connectService.removeConnection(any())).thenReturn(expectedDTO);
+        ArgumentCaptor<ConnectionRemovalRequest> connectionRemovalRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
+
+        this.mockMvc
+                .perform(
+                        delete("/api/connect")
+                                .content(gson.toJson(connectionRemovalRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + auth)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("booleanMessage").value((false)))
+                .andExpect(jsonPath("responseMessage").value(("message")))
+                .andReturn();
+
+        verify(connectService, times(1)).removeConnection(connectionRemovalRequestArgumentCaptor.capture());
+        assertThat(connectionRemovalRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionRemovalRequest);
+
+    }
+
+
+    @Test
     public void testGetCosignersForUserAttribute() throws Exception {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
