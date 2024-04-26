@@ -105,7 +105,7 @@ public class ConnectAPIController {
   @PostMapping("/cosign")
   public ResponseEntity saveCosign(@RequestBody @Valid CosignRequest cosignRequest) {
 
-    Optional opt = cosignService.cosign(cosignRequest);
+    Optional opt = cosignService.cosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
 
     if(opt.get() instanceof GenericResponseDTO) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(opt.get());

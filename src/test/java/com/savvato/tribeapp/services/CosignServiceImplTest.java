@@ -392,11 +392,6 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         Long userIdReceiving = USER2_ID;
         Long phraseId = PHRASE1_ID;
 
-        CosignRequest cosignRequest = new CosignRequest();
-        cosignRequest.userIdIssuing = userIdIssuing;
-        cosignRequest.userIdReceiving = userIdReceiving;
-        cosignRequest.phraseId = phraseId;
-
         CosignDTO expectedCosignDTO = CosignDTO.builder()
                 .userIdIssuing(userIdIssuing)
                 .userIdReceiving(userIdReceiving)
@@ -407,7 +402,7 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         doReturn(Optional.empty()).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
         doReturn(Optional.of(expectedCosignDTO)).when(cosignServiceSpy).saveCosign(Mockito.any(), Mockito.any(), Mockito.any());
 
-        Optional opt = cosignServiceSpy.cosign(cosignRequest);
+        Optional opt = cosignServiceSpy.cosign(userIdIssuing,userIdReceiving,phraseId);
         assertThat(expectedCosignDTO).usingRecursiveComparison().isEqualTo(opt.get());
     }
 
@@ -417,11 +412,6 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         Long userIdReceiving = USER2_ID;
         Long phraseId = PHRASE1_ID;
 
-        CosignRequest cosignRequest = new CosignRequest();
-        cosignRequest.userIdIssuing = userIdIssuing;
-        cosignRequest.userIdReceiving = userIdReceiving;
-        cosignRequest.phraseId = phraseId;
-
         GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
                 .booleanMessage(false)
                 .responseMessage("response message")
@@ -430,7 +420,7 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         CosignService cosignServiceSpy = spy(cosignService);
         doReturn(Optional.of(expectedGenericResponseDTO)).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
 
-        Optional opt = cosignServiceSpy.cosign(cosignRequest);
+        Optional opt = cosignServiceSpy.cosign(userIdIssuing,userIdReceiving,phraseId);
         assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(opt.get());
         verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
         verify(cosignServiceSpy, times(0)).saveCosign(anyLong(),anyLong(),anyLong());

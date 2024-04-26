@@ -13,7 +13,7 @@ public interface CosignService {
 
     Optional<CosignDTO> saveCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId);
 
-    Optional cosign(CosignRequest cosignRequest);
+    Optional cosign(Long userIdIssuing, Long userIdReceiving, Long phraseId);
 
     GenericResponseDTO deleteCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId);
 

@@ -222,7 +222,7 @@ public class ConnectAPITest {
         cosignRequest.userIdReceiving = testUserIdReceiving;
         cosignRequest.phraseId = testPhraseId;
 
-        when(cosignService.cosign(Mockito.any())).thenReturn(Optional.of(mockCosignDTO));
+        when(cosignService.cosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.of(mockCosignDTO));
 
         this.mockMvc
                 .perform(
@@ -256,7 +256,7 @@ public class ConnectAPITest {
                 .responseMessage("response message")
                 .build();
 
-        when(cosignService.cosign(Mockito.any())).thenReturn(Optional.of(expectedGenericResponseDTO));
+        when(cosignService.cosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.of(expectedGenericResponseDTO));
 
         this.mockMvc
                 .perform(

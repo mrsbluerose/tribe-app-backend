@@ -48,16 +48,16 @@ public class CosignServiceImpl implements CosignService {
     }
 
     @Override
-    public Optional cosign(CosignRequest cosignRequest) {
+    public Optional cosign(Long userIdIssuing, Long userIdReceiving, Long phraseId) {
 
-        Optional<GenericResponseDTO> optValidate = validateCosigners(cosignRequest.userIdIssuing,cosignRequest.userIdReceiving);
+        Optional<GenericResponseDTO> optValidate = validateCosigners(userIdIssuing,userIdReceiving);
 
         if(optValidate.isPresent()) {
             optValidate.get().booleanMessage = false;
             return optValidate;
         }
 
-        return saveCosign(cosignRequest.userIdIssuing,cosignRequest.userIdReceiving,cosignRequest.phraseId);
+        return saveCosign(userIdIssuing,userIdReceiving,phraseId);
 
     }
 
