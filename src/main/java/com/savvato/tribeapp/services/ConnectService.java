@@ -20,9 +20,9 @@ public interface ConnectService {
 
     boolean saveConnectionDetails(Long requestingUserId, Long toBeConnectedWithUserId);
 
-    GenericResponseDTO connect(ConnectRequest connectRequest);
+    GenericResponseDTO connect(Long requestingUserId, Long toBeConnectedWithUserId, String qrcodePhrase);
 
-    GenericResponseDTO removeConnection(ConnectionRemovalRequest connectionDeleteRequest);
+    GenericResponseDTO removeConnection(Long requestingUserId, Long connectedWithUserId);
 
     Optional<GenericResponseDTO> validateConnection(Long requestingUserId, Long toBeConnectedWithUserId);
 }

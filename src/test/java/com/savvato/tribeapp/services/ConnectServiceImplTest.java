@@ -1,8 +1,6 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.controllers.dto.ConnectRequest;
-import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
@@ -166,9 +164,9 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
     @Test
     public void removeConnectionHappyPath() {
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = USER1_ID;
-        connectionDeleteRequest.connectedWithUserId = USER2_ID;
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER2_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .booleanMessage(true)
@@ -180,19 +178,19 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
         ArgumentCaptor<Connection> connectionCaptor = ArgumentCaptor.forClass(Connection.class);
 
-        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionDeleteRequest);
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
         verify(connectionsRepository, times(1)).delete(connectionCaptor.capture());
-        assertEquals(connectionCaptor.getValue().getRequestingUserId(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectionCaptor.getValue().getToBeConnectedWithUserId(), connectionDeleteRequest.connectedWithUserId);
+        assertEquals(connectionCaptor.getValue().getRequestingUserId(), requestingUserId);
+        assertEquals(connectionCaptor.getValue().getToBeConnectedWithUserId(), connectedWithUserId);
     }
 
     @Test
     public void removeConnectionWhenDatabaseDeleteFails() {
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = USER1_ID;
-        connectionDeleteRequest.connectedWithUserId = USER2_ID;
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER2_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .responseMessage("Database delete failed.")
@@ -206,19 +204,19 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
         ArgumentCaptor<Connection> connectionArgumentCaptor = ArgumentCaptor.forClass(Connection.class);
 
-        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionDeleteRequest);
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
         verify(connectionsRepository, times(1)).delete(connectionArgumentCaptor.capture());
-        assertEquals(connectionArgumentCaptor.getValue().getRequestingUserId(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectionArgumentCaptor.getValue().getToBeConnectedWithUserId(), connectionDeleteRequest.connectedWithUserId);
+        assertEquals(connectionArgumentCaptor.getValue().getRequestingUserId(), requestingUserId);
+        assertEquals(connectionArgumentCaptor.getValue().getToBeConnectedWithUserId(), connectedWithUserId);
     }
 
     @Test
     public void removeConnectionWhenConnectionInvalid() {
-        ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
-        connectionRemovalRequest.requestingUserId = USER1_ID;
-        connectionRemovalRequest.connectedWithUserId = USER1_ID;
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .responseMessage("message")
@@ -228,7 +226,7 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(Optional.of(expectedDTO)).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
 
-        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(connectionRemovalRequest);
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
 
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
         verify(connectionsRepository, never()).delete(Mockito.any());
@@ -336,15 +334,14 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
             .responseMessage("Unable to validate QR code.")
                 .build();
 
-        ConnectRequest connectRequest = new ConnectRequest();
-        connectRequest.requestingUserId = USER1_ID;
-        connectRequest.toBeConnectedWithUserId = USER2_ID;
-        connectRequest.qrcodePhrase = "test";
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
 
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(false).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
 
-        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId,toBeConnectedWithUserId,qrcodePhrase);
 
         assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
         verify(connectServiceSpy, never()).validateConnection(anyLong(),anyLong());
@@ -359,16 +356,15 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
                 .responseMessage("message")
                 .build();
 
-        ConnectRequest connectRequest = new ConnectRequest();
-        connectRequest.requestingUserId = USER1_ID;
-        connectRequest.toBeConnectedWithUserId = USER2_ID;
-        connectRequest.qrcodePhrase = "test";
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
 
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
         doReturn(Optional.of(genericResponseDTO)).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
 
-        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
 
         assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
         verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(),anyLong());
@@ -377,10 +373,10 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
     @Test
     public void testConnectExistingConnectionWithReverseIds(){
-        ConnectRequest connectRequest = new ConnectRequest();
-        connectRequest.requestingUserId = USER1_ID;
-        connectRequest.toBeConnectedWithUserId = USER2_ID;
-        connectRequest.qrcodePhrase = "test";
+
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
 
         Connection existingConnection = new Connection();
         existingConnection.setRequestingUserId(USER2_ID);
@@ -388,7 +384,7 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
 
         GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
                 .booleanMessage(false)
-                .responseMessage("This connection already exists in reverse between the requesting user " + connectRequest.requestingUserId + " and the to be connected with user " + connectRequest.toBeConnectedWithUserId)
+                .responseMessage("This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId)
                 .build();
 
         ConnectService connectServiceSpy = spy(connectService);
@@ -396,7 +392,7 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
         doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
         when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.of(existingConnection));
 
-        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
 
         assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
         verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
@@ -409,17 +405,16 @@ public class ConnectServiceImplTest extends AbstractServiceImplTest {
                 .booleanMessage(true)
                 .build();
 
-        ConnectRequest connectRequest = new ConnectRequest();
-        connectRequest.requestingUserId = USER1_ID;
-        connectRequest.toBeConnectedWithUserId = USER2_ID;
-        connectRequest.qrcodePhrase = "test";
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
 
         ConnectService connectServiceSpy = spy(connectService);
         doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
         doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
         when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.empty());
 
-        GenericResponseDTO result = connectServiceSpy.connect(connectRequest);
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
 
         assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
 

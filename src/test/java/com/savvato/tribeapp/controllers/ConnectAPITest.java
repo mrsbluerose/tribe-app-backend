@@ -153,9 +153,11 @@ public class ConnectAPITest {
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(expectedGenericResponseDTO);
+        when(connectService.connect(anyLong(), anyLong(), anyString())).thenReturn(expectedGenericResponseDTO);
 
-        ArgumentCaptor<ConnectRequest> connectRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectRequest.class);
+        ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> toBeConnectedWithUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<String> qrcodePhraseArgumentCaptor = ArgumentCaptor.forClass(String.class);
 
         this.mockMvc
                 .perform(
@@ -167,8 +169,10 @@ public class ConnectAPITest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("booleanMessage").value((true)))
                 .andReturn();
-        verify(connectService, times(1)).connect(connectRequestArgumentCaptor.capture());
-        assertThat(connectRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectRequest);
+        verify(connectService, times(1)).connect(requestingUserIdArgumentCaptor.capture(), toBeConnectedWithUserIdArgumentCaptor.capture(), qrcodePhraseArgumentCaptor.capture());
+        assertThat(requestingUserIdArgumentCaptor.getValue()).isEqualTo(connectRequest.requestingUserId);
+        assertThat(toBeConnectedWithUserIdArgumentCaptor.getValue()).isEqualTo(connectRequest.toBeConnectedWithUserId);
+        assertThat(qrcodePhraseArgumentCaptor.getValue()).isEqualTo(connectRequest.qrcodePhrase);
     }
 
     @Test
@@ -186,7 +190,7 @@ public class ConnectAPITest {
         connectRequest.toBeConnectedWithUserId = 2L;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
-        when(connectService.connect(Mockito.any(ConnectRequest.class))).thenReturn(expectedGenericResponseDTO);
+        when(connectService.connect(anyLong(), anyLong(), anyString())).thenReturn(expectedGenericResponseDTO);
 
         this.mockMvc
                 .perform(
@@ -404,8 +408,10 @@ public class ConnectAPITest {
                 .booleanMessage(true)
                 .build();
 
-        when(connectService.removeConnection(any())).thenReturn(expectedDTO);
-        ArgumentCaptor<ConnectionRemovalRequest> connectionRemovalRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
+        when(connectService.removeConnection(anyLong(), anyLong())).thenReturn(expectedDTO);
+        ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> connectedWithIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+
 
         this.mockMvc
                 .perform(
@@ -418,8 +424,9 @@ public class ConnectAPITest {
                 .andExpect(jsonPath("booleanMessage").value((true)))
                 .andReturn();
 
-        verify(connectService, times(1)).removeConnection(connectionRemovalRequestArgumentCaptor.capture());
-        assertThat(connectionRemovalRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionRemovalRequest);
+        verify(connectService, times(1)).removeConnection(requestingUserIdArgumentCaptor.capture(), connectedWithIdArgumentCaptor.capture());
+        assertThat(requestingUserIdArgumentCaptor.getValue()).isEqualTo(connectionRemovalRequest.requestingUserId);
+        assertThat(connectedWithIdArgumentCaptor.getValue()).isEqualTo(connectionRemovalRequest.connectedWithUserId);
 
     }
 
@@ -438,8 +445,9 @@ public class ConnectAPITest {
                 .responseMessage("message")
                 .build();
 
-        when(connectService.removeConnection(any())).thenReturn(expectedDTO);
-        ArgumentCaptor<ConnectionRemovalRequest> connectionRemovalRequestArgumentCaptor = ArgumentCaptor.forClass(ConnectionRemovalRequest.class);
+        when(connectService.removeConnection(anyLong(), anyLong())).thenReturn(expectedDTO);
+        ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> connectedWithIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
 
         this.mockMvc
                 .perform(
@@ -453,8 +461,9 @@ public class ConnectAPITest {
                 .andExpect(jsonPath("responseMessage").value(("message")))
                 .andReturn();
 
-        verify(connectService, times(1)).removeConnection(connectionRemovalRequestArgumentCaptor.capture());
-        assertThat(connectionRemovalRequestArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(connectionRemovalRequest);
+        verify(connectService, times(1)).removeConnection(requestingUserIdArgumentCaptor.capture(), connectedWithIdArgumentCaptor.capture());
+        assertThat(requestingUserIdArgumentCaptor.getValue()).isEqualTo(connectionRemovalRequest.requestingUserId);
+        assertThat(connectedWithIdArgumentCaptor.getValue()).isEqualTo(connectionRemovalRequest.connectedWithUserId);
 
     }
 

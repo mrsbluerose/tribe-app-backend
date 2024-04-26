@@ -79,7 +79,7 @@ public class ConnectAPIController {
   @Connect
   @PostMapping
   public ResponseEntity<GenericResponseDTO> connect(@RequestBody @Valid ConnectRequest connectRequest) {
-    GenericResponseDTO connection = connectService.connect(connectRequest);
+    GenericResponseDTO connection = connectService.connect(connectRequest.requestingUserId,connectRequest.toBeConnectedWithUserId,connectRequest.qrcodePhrase);
 
     if(connection.booleanMessage) {
       return ResponseEntity.status(HttpStatus.OK).body(connection);
@@ -91,7 +91,7 @@ public class ConnectAPIController {
   @RemoveConnection
   @DeleteMapping
   public ResponseEntity<GenericResponseDTO> removeConnection(@RequestBody @Valid ConnectionRemovalRequest connectionRemovalRequest) {
-    GenericResponseDTO rtn = connectService.removeConnection(connectionRemovalRequest);
+    GenericResponseDTO rtn = connectService.removeConnection(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId);
 
     if (rtn.booleanMessage) {
       return ResponseEntity.ok().body(rtn);

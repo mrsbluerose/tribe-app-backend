@@ -76,33 +76,33 @@ public class ConnectServiceImpl implements ConnectService {
     }
 
     @Override
-    public GenericResponseDTO connect(ConnectRequest connectRequest) {
+    public GenericResponseDTO connect(Long requestingUserId, Long toBeConnectedWithUserId, String qrcodePhrase) {
 
         GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
 
-        if (!validateQRCode(connectRequest.qrcodePhrase, connectRequest.toBeConnectedWithUserId)) {
+        if (!validateQRCode(qrcodePhrase, toBeConnectedWithUserId)) {
             genericResponseDTO.booleanMessage = false;
             genericResponseDTO.responseMessage = "Unable to validate QR code.";
             return genericResponseDTO;
         }
 
-        Optional<GenericResponseDTO> optValidateConnection = validateConnection(connectRequest.requestingUserId,connectRequest.toBeConnectedWithUserId);
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(requestingUserId,toBeConnectedWithUserId);
 
         if (optValidateConnection.isPresent()) {
             return optValidateConnection.get();
         }
 
         Optional<Connection> existingConnectionWithReversedIds =
-                connectionsRepository.findExistingConnectionWithReversedUserIds(connectRequest.requestingUserId,
-                        connectRequest.toBeConnectedWithUserId);
+                connectionsRepository.findExistingConnectionWithReversedUserIds(requestingUserId,
+                        toBeConnectedWithUserId);
 
         if (existingConnectionWithReversedIds.isPresent()) {
             genericResponseDTO.booleanMessage = false;
-            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + connectRequest.requestingUserId + " and the to be connected with user " + connectRequest.toBeConnectedWithUserId;
+            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId;
             return genericResponseDTO;
         }
 
-        genericResponseDTO.booleanMessage = saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
+        genericResponseDTO.booleanMessage = saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
 
         return genericResponseDTO;
     }
@@ -142,9 +142,9 @@ public class ConnectServiceImpl implements ConnectService {
         return outgoingMessages;
     }
     @Override
-    public GenericResponseDTO removeConnection(ConnectionRemovalRequest connectionRemovalRequest) {
+    public GenericResponseDTO removeConnection(Long requestingUserId, Long connectedWithUserId) {
 
-        Optional<GenericResponseDTO> optValidateConnection = validateConnection(connectionRemovalRequest.requestingUserId,  connectionRemovalRequest.connectedWithUserId);
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(requestingUserId, connectedWithUserId);
 
         if (optValidateConnection.isPresent()) {
             return optValidateConnection.get();
@@ -153,8 +153,7 @@ public class ConnectServiceImpl implements ConnectService {
         GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
 
         try {
-            Connection connection = new Connection(connectionRemovalRequest.requestingUserId,
-                    connectionRemovalRequest.connectedWithUserId);
+            Connection connection = new Connection(requestingUserId, connectedWithUserId);
             connectionsRepository.delete(connection);
             genericResponseDTO.booleanMessage = true;
         } catch (Exception e) {
