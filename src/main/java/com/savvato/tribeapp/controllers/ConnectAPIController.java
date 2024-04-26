@@ -115,11 +115,15 @@ public class ConnectAPIController {
   }
   @DeleteCosign
   @DeleteMapping("/cosign")
-  public ResponseEntity deleteCosign(@RequestBody @Valid CosignRequest cosignRequest) throws Exception {
+  public ResponseEntity<GenericResponseDTO> deleteCosign(@RequestBody @Valid CosignRequest cosignRequest) throws Exception {
 
-    cosignService.deleteCosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
+    GenericResponseDTO rtn = cosignService.deleteCosign(cosignRequest.userIdIssuing,cosignRequest.userIdReceiving,cosignRequest.phraseId);
 
-    return ResponseEntity.status(HttpStatus.OK).build();
+    if (rtn.booleanMessage) {
+      return ResponseEntity.ok().body(rtn);
+    } else {
+      return ResponseEntity.badRequest().body(rtn);
+    }
 
   }
 

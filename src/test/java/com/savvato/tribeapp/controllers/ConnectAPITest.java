@@ -268,6 +268,65 @@ public class ConnectAPITest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json("{\"responseMessage\":\"response message\", \"booleanMessage\":false}"));
     }
+
+    @Test
+    public void deleteCosignSadPath() throws Exception {
+        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        CosignRequest cosignRequest = new CosignRequest();
+        cosignRequest.userIdIssuing = 1L;
+        cosignRequest.userIdReceiving = 2L;
+        cosignRequest.phraseId = 1L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("response message")
+                .build();
+
+        when(cosignService.deleteCosign(anyLong(),anyLong(),anyLong())).thenReturn(expectedDTO);
+
+        this.mockMvc
+                .perform(
+                        delete("/api/connect/cosign")
+                                .content(gson.toJson(cosignRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + auth)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("booleanMessage").value((false)))
+                .andExpect(jsonPath("responseMessage").value(("response message")));
+    }
+
+    @Test
+    public void deleteCosignHappyPath() throws Exception {
+        when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        CosignRequest cosignRequest = new CosignRequest();
+        cosignRequest.userIdIssuing = 1L;
+        cosignRequest.userIdReceiving = 2L;
+        cosignRequest.phraseId = 1L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
+
+        when(cosignService.deleteCosign(anyLong(),anyLong(),anyLong())).thenReturn(expectedDTO);
+
+        this.mockMvc
+                .perform(
+                        delete("/api/connect/cosign")
+                                .content(gson.toJson(cosignRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + auth)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("booleanMessage").value((true)));
+
+    }
     
     @Test
     public void testGetConnectionsHappyPath() throws Exception {

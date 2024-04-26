@@ -62,8 +62,29 @@ public class CosignServiceImpl implements CosignService {
     }
 
     @Override
-    public boolean deleteCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId) {
-        return false;
+    public GenericResponseDTO deleteCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId) {
+
+        Optional<GenericResponseDTO> optValidateDTO = validateCosigners(userIdIssuing,userIdReceiving);
+
+        if(optValidateDTO.isPresent()) {
+            return optValidateDTO.get();
+        }
+
+        GenericResponseDTO rtn = GenericResponseDTO.builder().build();
+
+        try {
+            Cosign cosign = new Cosign();
+            cosign.userIdIssuing = userIdIssuing;
+            cosign.userIdReceiving = userIdReceiving;
+            cosign.phraseId = phraseId;
+            cosignRepository.delete(cosign);
+            rtn.booleanMessage = true;
+        } catch (Exception e) {
+            rtn.booleanMessage = false;
+            rtn.responseMessage = e.getMessage();
+        }
+
+        return rtn;
     }
 
     @Override
@@ -119,16 +140,19 @@ public class CosignServiceImpl implements CosignService {
     @Override
     public Optional<GenericResponseDTO> validateCosigners(Long userIdIssuing, Long userIdReceiving) {
 
+        GenericResponseDTO rtnDTO = GenericResponseDTO.builder().build();
         Long loggedInUser = userService.getLoggedInUserId();
 
         if (!loggedInUser.equals(userIdIssuing)) {
-            String msg = "The logged in user (" + loggedInUser + ") does not match issuing user (" + userIdIssuing + ")";
-            return Optional.of(genericResponseService.createDTO(msg));
+            rtnDTO.booleanMessage = false;
+            rtnDTO.responseMessage = "The logged in user (" + loggedInUser + ") does not match issuing user (" + userIdIssuing + ")";
+            return Optional.of(rtnDTO);
         }
 
         if (userIdIssuing.equals(userIdReceiving)) {
-            String msg = "User " + userIdIssuing + " may not cosign themselves.";
-            return Optional.of(genericResponseService.createDTO(msg));
+            rtnDTO.booleanMessage = false;
+            rtnDTO.responseMessage = "User " + userIdIssuing + " may not cosign themselves.";
+            return Optional.of(rtnDTO);
         }
 
             return Optional.empty();

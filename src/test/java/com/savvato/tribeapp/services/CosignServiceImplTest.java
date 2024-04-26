@@ -358,16 +358,15 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER2_ID;
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
                 .responseMessage("The logged in user (" + loggedInUser + ") does not match issuing user (" + userIdIssuing + ")")
                 .build();
 
         when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
-        when(genericResponseService.createDTO(anyString())).thenReturn(expectedDTO);
 
         Optional<GenericResponseDTO> opt = cosignService.validateCosigners(userIdIssuing,userIdReceiving);
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(opt.get());
         verify(userService, times(1)).getLoggedInUserId();
-        verify(genericResponseService,times(1)).createDTO(anyString());
     }
 
     @Test
@@ -376,16 +375,15 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER1_ID;
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
                 .responseMessage("User " + userIdIssuing + " may not cosign themselves.")
                 .build();
 
         when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
-        when(genericResponseService.createDTO(anyString())).thenReturn(expectedDTO);
 
         Optional<GenericResponseDTO> opt = cosignService.validateCosigners(userIdIssuing,userIdReceiving);
         assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(opt.get());
         verify(userService, times(1)).getLoggedInUserId();
-        verify(genericResponseService,times(1)).createDTO(anyString());
     }
 
     @Test
@@ -436,6 +434,65 @@ public class CosignServiceImplTest extends AbstractServiceImplTest{
         assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(opt.get());
         verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
         verify(cosignServiceSpy, times(0)).saveCosign(anyLong(),anyLong(),anyLong());
+    }
+
+    @Test
+    public void testDeleteCosignCosignersInvalid() {
+
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseId = 1L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
+        expectedDTO.booleanMessage = false;
+        expectedDTO.responseMessage = "message";
+
+        CosignService cosignServiceSpy = spy(cosignService);
+        doReturn(Optional.of(expectedDTO)).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
+
+        GenericResponseDTO actualDTO = cosignServiceSpy.deleteCosign(userIdIssuing,userIdReceiving,phraseId);
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
+        verify(cosignRepository, never()).delete(Mockito.any());
+    }
+
+    @Test
+    public void testDeleteCosignExceptionThrownOnDelete() {
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseID = 1L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
+        expectedDTO.booleanMessage = false;
+        expectedDTO.responseMessage = "Database delete failed.";
+
+        CosignService cosignServiceSpy = spy(cosignService);
+        doReturn(Optional.empty()).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
+        doThrow(new IllegalArgumentException("Database delete failed.")).when(cosignRepository).delete(Mockito.any());
+
+        GenericResponseDTO actualDTO = cosignServiceSpy.deleteCosign(userIdIssuing,userIdReceiving,phraseID);
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
+        verify(cosignRepository, times(1)).delete(Mockito.any());
+    }
+
+    @Test
+    public void testDeleteCosignHappyPath() {
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseID = 1L;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
+        expectedDTO.booleanMessage = true;
+
+        CosignService cosignServiceSpy = spy(cosignService);
+        doReturn(Optional.empty()).when(cosignServiceSpy).validateCosigners(Mockito.any(), Mockito.any());
+        doNothing().when(cosignRepository).delete(Mockito.any());
+
+        GenericResponseDTO actualDTO = cosignServiceSpy.deleteCosign(userIdIssuing,userIdReceiving,phraseID);
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(cosignServiceSpy, times(1)).validateCosigners(anyLong(),anyLong());
+        verify(cosignRepository, times(1)).delete(Mockito.any());
     }
 
 }

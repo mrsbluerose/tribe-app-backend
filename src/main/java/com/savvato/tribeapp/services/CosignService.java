@@ -15,7 +15,7 @@ public interface CosignService {
 
     Optional cosign(CosignRequest cosignRequest);
 
-    boolean deleteCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId);
+    GenericResponseDTO deleteCosign(Long userIdIssuing, Long userIdReceiving, Long phraseId);
 
     List<UsernameDTO> getCosignersForUserAttribute(Long userReceivingId, Long phraseId);
 
