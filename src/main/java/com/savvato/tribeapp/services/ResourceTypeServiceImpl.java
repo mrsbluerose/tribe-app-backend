@@ -4,6 +4,8 @@ import com.savvato.tribeapp.constants.ResourceTypeConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+
 @Service
 public class ResourceTypeServiceImpl implements ResourceTypeService {
 
@@ -14,7 +16,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         String rtn = null;
 
         if (resourceType.equals(ResourceTypeConstants.RESOURCE_TYPE_PROFILE_IMAGE)) {
-            rtn = resourcesDirRoot + "/profile";
+            rtn = resourcesDirRoot + File.separator + "profile";
         } else {
             throw new IllegalArgumentException("ResourceTypeService was passed an invalid resource type.");
         }

@@ -48,13 +48,14 @@ public class StorageServiceImplTest {
 
     @Test
     public void storeHappyPath() {
-        String resourceType = "Profile";
+        String resourceType = "profile";
         byte[] content = new byte[1];
         MultipartFile file = new MockMultipartFile("test file", content);
-        String dir = "/";
+        String directoryPathTemp = System.getProperty("java.io.tmpdir") + File.separator + "testFiles";
         String filename = "";
-        when(resourceTypeService.getDirectoryForResourceType(anyString())).thenReturn(dir);
+        when(resourceTypeService.getDirectoryForResourceType(anyString())).thenReturn(directoryPathTemp);
         storageService.store(resourceType, file, filename);
+
     }
 
     @Test
