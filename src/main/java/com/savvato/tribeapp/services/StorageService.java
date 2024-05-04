@@ -28,7 +28,7 @@ public class StorageService {
 	public void store(String resourceType, MultipartFile file, String filename) {
     	String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
 
-		logger.debug("******* ****  **** about to do StorageService::store() " + dir + "/" + filename);
+		logger.debug("******* ****  **** about to do StorageService::store() " + dir + File.separator + filename);
 
     	try {
     		File fdir = new File(dir);
@@ -38,7 +38,7 @@ public class StorageService {
     	}
 
     	try {
-			file.transferTo(new File(dir + "/" + filename));
+			file.transferTo(new File(dir + File.separator + filename));
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -47,7 +47,7 @@ public class StorageService {
 			e.printStackTrace();
 		}
 
-    	logger.debug("*********     *** successfully exiting the store method .. " + dir + "/" + filename);
+    	logger.debug("*********     *** successfully exiting the store method .. " + dir + File.separator + filename);
     }
 
 //    public Resource loadAsResource(String resourceType, String filename) {
@@ -81,7 +81,7 @@ public class StorageService {
 		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
 
     	try {
-    		File f = new File(dir + "/" + filename);
+    		File f = new File(dir + File.separator + filename);
 
 			if (f.exists())
 				rtn = f.lastModified();
@@ -90,7 +90,7 @@ public class StorageService {
     		throw e;
 		}
     	
-    	logger.debug("***************}}  checking isFound: " + dir + "/" + filename + " --> " + rtn + " " + (rtn != 0));
+    	logger.debug("***************}}  checking isFound: " + dir + File.separator + filename + " --> " + rtn + " " + (rtn != 0));
     	
     	return rtn;
     }
@@ -99,10 +99,10 @@ public class StorageService {
     	boolean rtn = false;
 		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
 
-		logger.debug("***************}}  Deleting: " + dir + "/" + filename);
+		logger.debug("***************}}  Deleting: " + dir + File.separator + filename);
 
 		try {
-    		File f = new File(dir + "/" + filename);
+    		File f = new File(dir + File.separator + filename);
     		rtn = f.delete();
     	} catch (Exception e) {
     		throw e;
@@ -114,13 +114,13 @@ public class StorageService {
 
     public byte[] loadAsByteArray(String resourceType, String filename) {
 		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
-    	logger.debug("*******         Returning byte array of file at: " + dir + "/" + filename);
+    	logger.debug("*******         Returning byte array of file at: " + dir + File.separator + filename);
 
     	byte[] rtn = null;
     
 	    try {
 	    	// try to load the requested image
-	    	rtn = readFile(new FileSystemResource(dir + "/" + filename));
+	    	rtn = readFile(new FileSystemResource(dir + File.separator + filename));
 	    } catch (FileNotFoundException fnfe) {
 //	    	try {
 //	    		 if it can't be found, send back our default image
@@ -129,10 +129,10 @@ public class StorageService {
 //	    	} catch (IOException ioe) {
 //	    		logger.error(ioe);
 //	    	}
-			logger.error("Could not find file: " + dir + "/" + filename);
+			logger.error("Could not find file: " + dir + File.separator + filename);
 	    } catch (IOException ioe) {
 	    	// something other than a missing requested file happened.. :(
-	    	logger.error("Something bad happened with the file " + dir + "/" + filename, ioe);
+	    	logger.error("Something bad happened with the file " + dir + File.separator + filename, ioe);
 	    }
 	    
 	    return rtn;

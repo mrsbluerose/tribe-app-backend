@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.io.File;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -31,7 +33,7 @@ public class ResourceTypeServiceImplTest {
     @Test
     public void getDirectoryForResourceTypeWhenResourceTypeValid() {
         String resourceType = ResourceTypeConstants.RESOURCE_TYPE_PROFILE_IMAGE;
-        String expectedResult = resourcesDirRoot + "/profile";
+        String expectedResult = resourcesDirRoot + File.separator + "profile";
 
         String actualResult = resourceTypeService.getDirectoryForResourceType(resourceType);
         assertEquals(expectedResult, actualResult);
