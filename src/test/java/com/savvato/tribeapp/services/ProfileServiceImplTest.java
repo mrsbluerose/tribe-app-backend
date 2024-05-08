@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.ProfileDTO;
 import com.savvato.tribeapp.entities.User;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 
-public class ProfileServiceImplTest extends AbstractServiceImplTest {
+public class ProfileServiceImplTest extends AbstractTestConstants {
     @TestConfiguration
     static class ProfileServiceTestContextConfiguration {
         @Bean

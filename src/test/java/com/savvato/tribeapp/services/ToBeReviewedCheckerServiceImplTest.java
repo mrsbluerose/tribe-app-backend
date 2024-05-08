@@ -2,6 +2,7 @@ package com.savvato.tribeapp.services;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.entities.RejectedPhrase;
 import com.savvato.tribeapp.entities.ReviewSubmittingUser;
 import com.savvato.tribeapp.entities.ToBeReviewed;
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class ToBeReviewedCheckerServiceImplTest extends AbstractServiceImplTest {
+public class ToBeReviewedCheckerServiceImplTest extends AbstractTestConstants {
     @TestConfiguration
     static class ToBeReviewedCheckerServiceImplTestContextConfiguration {
         @Bean

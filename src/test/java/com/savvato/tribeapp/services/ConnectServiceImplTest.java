@@ -1,6 +1,8 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
@@ -26,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
-public class ConnectServiceImplTest extends AbstractServiceImplTest {
+public class ConnectServiceImplTest extends AbstractTestConstants {
     @TestConfiguration
     static class ConnectServiceImplTestContextConfiguration {
         @Bean

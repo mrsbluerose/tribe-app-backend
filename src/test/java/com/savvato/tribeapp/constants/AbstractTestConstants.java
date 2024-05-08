@@ -1,4 +1,4 @@
-package com.savvato.tribeapp.services;
+package com.savvato.tribeapp.constants;
 
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UsernameDTO;
@@ -7,7 +7,7 @@ import com.savvato.tribeapp.entities.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractServiceImplTest {
+public abstract class AbstractTestConstants {
     public static long USER1_ID = 1;
     public static long USER2_ID = 732;
     public static String USER1_EMAIL = "user1@email.com";

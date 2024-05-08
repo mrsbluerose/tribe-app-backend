@@ -1,4 +1,5 @@
 package com.savvato.tribeapp.services;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
 import com.savvato.tribeapp.entities.*;
 import com.savvato.tribeapp.repositories.*;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
 public class ReviewSubmittingUserServiceImplTest extends
-        AbstractServiceImplTest {
+        AbstractTestConstants {
 
     @TestConfiguration
     static class ReviewSubmittingUserServiceTestContextConfiguration {

@@ -1,7 +1,6 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.controllers.dto.ConnectRequest;
-import com.savvato.tribeapp.controllers.dto.CosignRequest;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.dto.CosignDTO;
 import com.savvato.tribeapp.dto.CosignsForUserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
@@ -27,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
-public class CosignServiceImplTest extends AbstractServiceImplTest{
+public class CosignServiceImplTest extends AbstractTestConstants {
 
     @TestConfiguration
     static class CosignServiceImplTestContextConfiguration {
