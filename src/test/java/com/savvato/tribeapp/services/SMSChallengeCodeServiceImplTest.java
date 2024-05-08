@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class SMSChallengeCodeServiceImplTest extends AbstractServiceImplTest {
+public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
     @TestConfiguration
     static class SMSChallengeCodeServiceTestContextConfiguration {
         @Bean

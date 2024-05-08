@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.UserRoleDTO;
@@ -31,7 +32,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserServiceImplTest extends AbstractServiceImplTest {
+public class UserServiceImplTest extends AbstractTestConstants {
 
     @TestConfiguration
     static class UserServiceTestContextConfiguration {

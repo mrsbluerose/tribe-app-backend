@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.entities.ToBeReviewed;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
@@ -22,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
-public class ToBeReviewedServiceImplTest extends AbstractServiceImplTest {
+public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
 
     @TestConfiguration
     static class PhraseServiceTestContextConfiguration {
