@@ -1,6 +1,7 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserPrincipalServiceImplTest extends AbstractServiceImplTest {
+public class UserPrincipalServiceImplTest extends AbstractTestConstants {
     @TestConfiguration
     static class UserPrincipalServiceTestContextConfiguration {
         @Bean

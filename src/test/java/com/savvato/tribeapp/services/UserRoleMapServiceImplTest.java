@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.entities.UserRoleMap;
@@ -24,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserRoleMapServiceImplTest extends AbstractServiceImplTest {
+public class UserRoleMapServiceImplTest extends AbstractTestConstants {
 
     @TestConfiguration
     static class UserRoleMapServiceTestContextConfiguration {

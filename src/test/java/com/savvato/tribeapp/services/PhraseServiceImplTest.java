@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.dto.PhraseDTO;
 import com.savvato.tribeapp.dto.projections.PhraseWithUserCountDTO;
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith({SpringExtension.class})
-public class PhraseServiceImplTest extends AbstractServiceImplTest {
+public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @TestConfiguration
     static class PhraseServiceTestContextConfiguration {

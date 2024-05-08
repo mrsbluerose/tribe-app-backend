@@ -1,7 +1,7 @@
 package com.savvato.tribeapp.config.principal;
 
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.services.AbstractServiceImplTest;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserPrincipalTest extends AbstractServiceImplTest {
+public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void getAuthoritiesWhenUserNull() {
