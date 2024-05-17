@@ -3,11 +3,13 @@ package com.savvato.tribeapp.services;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
-import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
+import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
 import com.savvato.tribeapp.repositories.UserRepository;
+import liquibase.pro.packaged.U;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import com.savvato.tribeapp.constants.Constants;
 
 import java.util.*;
 
@@ -50,14 +52,17 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
     ConnectionsRepository connectionsRepository;
 
     @MockBean
-    SimpMessagingTemplate simpMessagingTemplate;
+    UserRepository userRepository;
 
     @MockBean
-    UserRepository userRepository;
+    UserService userService;
+
+    @MockBean
+    GenericResponseService genericResponseService;
 
     @Test
     public void getQRCodeString() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Optional<String> qrCodeString = Optional.of("QR code");
         Mockito.when(cacheService.get(Mockito.any(), Mockito.any())).thenReturn(qrCodeString.get());
         Optional<String> rtn = connectService.getQRCodeString(userId);
@@ -66,7 +71,7 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void storeQRCodeString() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Optional<String> generatedQRCodeString = Optional.of("QR code");
 
         Optional<String> rtn = connectService.storeQRCodeString(userId);
@@ -81,8 +86,8 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void saveConnectionDetailsHappyPath() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
 
         Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
         assertEquals(connectionStatus, true);
@@ -90,158 +95,62 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void saveConnectionDetailsUnhappyPath() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
         doThrow(new IndexOutOfBoundsException()).when(connectionsRepository).save(Mockito.any());
         Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
         assertEquals(connectionStatus, false);
     }
 
     @Test
-    public void saveConnectionDetailsWhenExistingConnectionWithReversedUserIdsExists() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        Connection existingConnection = new Connection(requestingUserId, toBeConnectedWithUserId);
-        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(), anyLong())).thenReturn(Optional.of(existingConnection));
-        Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-        assertEquals(connectionStatus, false);
-        verify(connectionsRepository, never()).save(any());
+    public void testValidateConnectionHappyPath() {
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+
+        when(userService.getLoggedInUserId()).thenReturn(USER1_ID);
+
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+
+        assertThat(validateConnection.isEmpty());
+        verify(userService, times(1)).getLoggedInUserId();
+
     }
 
     @Test
-    public void saveConnectionDetailsWhenIdsAreTheSame() {
-        Long requestingUserId = 2L;
-        Long toBeConnectedWithUserId = 2L;
-        Boolean connectionStatus = connectService.saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-        assertEquals(connectionStatus, false);
+    public void testValidateConnectionWhenIdsAreTheSame() {
+        Long requestingUserId = USER2_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("User " + requestingUserId + " may not have a connection to themselves")
+                .build();
 
-        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(), anyLong());
-        verify(connectionsRepository, never()).save(any());
+        when(userService.getLoggedInUserId()).thenReturn(USER2_ID);
+
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId, toBeConnectedWithUserId);
+
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(validateConnection.get());
+        verify(userService, times(1)).getLoggedInUserId();
+
     }
 
     @Test
-    public void connectWhenQrCodeIsInvalid() {
-        UserPrincipal user = new UserPrincipal(getUser1());
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String qrcodePhrase = "invalid code";
-        String connectionIntent = "";
-        String expectedDestination = "/connect/user/queue/specific-user";
-        ConnectIncomingMessageDTO incoming = ConnectIncomingMessageDTO.builder().requestingUserId(requestingUserId).toBeConnectedWithUserId(toBeConnectedWithUserId).qrcodePhrase(qrcodePhrase).connectionIntent(connectionIntent).build();
-        ConnectOutgoingMessageDTO outgoing = ConnectOutgoingMessageDTO.builder().connectionError(true).message("Invalid QR code; failed to connect.").build();
-        ConnectService connectServiceSpy = spy(connectService);
-        doReturn(false).when(connectServiceSpy).validateQRCode(Mockito.any(), Mockito.any());
+    public void testValidateConnectionWhenRequestingUserNotLoggedIn() {
+        Long loggedInUser = USER3_ID;
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("The logged in user (" + loggedInUser + ") does not match requesting user (" + requestingUserId + ")")
+                .build();
 
-        connectServiceSpy.connect(incoming);
+        when(userService.getLoggedInUserId()).thenReturn(loggedInUser);
 
-        verify(connectServiceSpy, never()).handleConnectionIntent(Mockito.any(), Mockito.any(), Mockito.any());
-        ArgumentCaptor<String> recipientArg = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> destinationArg = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<ConnectOutgoingMessageDTO> outgoingMsgArg = ArgumentCaptor.forClass(ConnectOutgoingMessageDTO.class);
+        Optional<GenericResponseDTO> validateConnection = connectService.validateConnection(requestingUserId,toBeConnectedWithUserId);
 
-        verify(simpMessagingTemplate, times(1)).convertAndSendToUser(recipientArg.capture(), destinationArg.capture(), outgoingMsgArg.capture());
-        assertEquals(recipientArg.getValue(), String.valueOf(toBeConnectedWithUserId));
-        assertEquals(destinationArg.getValue(), expectedDestination);
-        assertThat(outgoingMsgArg.getValue()).isEqualToComparingFieldByField(outgoing);
-    }
+        assertThat(expectedGenericResponseDTO).usingRecursiveComparison().isEqualTo(validateConnection.get());
+        verify(userService, times(1)).getLoggedInUserId();
 
-    @Test
-    public void connectWhenQrCodeIsValid() {
-        UserPrincipal user = new UserPrincipal(getUser1());
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String connectionIntent = "";
-        ArrayList<Long> recipients = new ArrayList<>(List.of(toBeConnectedWithUserId));
-        String expectedDestination = "/connect/user/queue/specific-user";
-        ConnectIncomingMessageDTO incoming = ConnectIncomingMessageDTO.builder().requestingUserId(requestingUserId).toBeConnectedWithUserId(toBeConnectedWithUserId).connectionIntent(connectionIntent).build();
-        ConnectOutgoingMessageDTO outgoing = ConnectOutgoingMessageDTO.builder().message("Please confirm that you wish to connect.").to(recipients).build();
-        ConnectService connectServiceSpy = spy(connectService);
-        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(), Mockito.any());
-        doReturn(outgoing).when(connectServiceSpy).handleConnectionIntent(Mockito.any(), Mockito.any(), Mockito.any());
-
-        connectServiceSpy.connect(incoming);
-
-        ArgumentCaptor<String> connectionIntentArg = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<Long> requestingUserIdArg = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> toBeConnectedWithUserIdArg = ArgumentCaptor.forClass(Long.class);
-        verify(connectServiceSpy, times(1)).handleConnectionIntent(connectionIntentArg.capture(), requestingUserIdArg.capture(), toBeConnectedWithUserIdArg.capture());
-        assertEquals(connectionIntentArg.getValue(), connectionIntent);
-        assertEquals(requestingUserIdArg.getValue(), requestingUserId);
-        assertEquals(toBeConnectedWithUserIdArg.getValue(), toBeConnectedWithUserId);
-
-        ArgumentCaptor<String> recipientArg = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> destinationArg = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<ConnectOutgoingMessageDTO> outgoingMsgArg = ArgumentCaptor.forClass(ConnectOutgoingMessageDTO.class);
-        verify(simpMessagingTemplate, times(1)).convertAndSendToUser(recipientArg.capture(), destinationArg.capture(), outgoingMsgArg.capture());
-        assertEquals(recipientArg.getValue(), String.valueOf(outgoing.to.get(0)));
-        assertEquals(destinationArg.getValue(), expectedDestination);
-        assertThat(outgoingMsgArg.getValue()).isEqualToComparingFieldByField(outgoing);
-    }
-
-    @Test
-    public void handleConnectionIntentWhenNoConnectionIntent() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String connectionIntent = "";
-        ArrayList<Long> recipients = new ArrayList<>(List.of(toBeConnectedWithUserId));
-        ConnectOutgoingMessageDTO expectedOutgoingMsg = ConnectOutgoingMessageDTO.builder().message("Please confirm that you wish to connect.").to(recipients).build();
-        ConnectService connectServiceSpy = spy(connectService);
-        ConnectOutgoingMessageDTO outgoing = connectServiceSpy.handleConnectionIntent(connectionIntent, requestingUserId, toBeConnectedWithUserId);
-
-        verify(connectServiceSpy, never()).saveConnectionDetails(Mockito.any(), Mockito.any());
-        verify(connectionsRepository, never()).save(Mockito.any());
-        assertThat(expectedOutgoingMsg).isEqualToComparingFieldByField(outgoing);
-    }
-
-    @Test
-    public void handleConnectionIntentWhenConnectionIntentConfirmedAndDatabaseSaveSuccessful() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String connectionIntent = "confirmed";
-        ArrayList<Long> recipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-        ConnectOutgoingMessageDTO expectedOutgoingMsg = ConnectOutgoingMessageDTO.builder().connectionSuccess(true).to(recipients).message("Successfully saved connection!").build();
-        Connection connection = new Connection(requestingUserId, toBeConnectedWithUserId);
-        Mockito.when(connectionsRepository.save(Mockito.any())).thenReturn(connection);
-        ConnectOutgoingMessageDTO outgoing = connectService.handleConnectionIntent(connectionIntent, requestingUserId, toBeConnectedWithUserId);
-
-        ArgumentCaptor<Connection> connectionArg = ArgumentCaptor.forClass(Connection.class);
-        verify(connectionsRepository, times(1)).save(connectionArg.capture());
-        assertEquals(connectionArg.getValue().getToBeConnectedWithUserId(), toBeConnectedWithUserId);
-        assertEquals(connectionArg.getValue().getRequestingUserId(), requestingUserId);
-        assertThat(expectedOutgoingMsg).isEqualToComparingFieldByField(outgoing);
-    }
-
-    @Test
-    public void handleConnectionIntentWhenConnectionIntentConfirmedAndDatabaseSaveUnsuccessful() throws Exception {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String connectionIntent = "confirmed";
-        ArrayList<Long> recipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-        ConnectOutgoingMessageDTO expectedOutgoingMsg = ConnectOutgoingMessageDTO.builder().connectionError(true).to(recipients).message("Failed to save connection to database.").build();
-
-        Mockito.when(connectionsRepository.save(Mockito.any())).thenThrow(new NullPointerException("Something went wrong."));
-        ConnectOutgoingMessageDTO outgoing = connectService.handleConnectionIntent(connectionIntent, requestingUserId, toBeConnectedWithUserId);
-
-        ArgumentCaptor<Connection> connectionArg = ArgumentCaptor.forClass(Connection.class);
-        verify(connectionsRepository, times(1)).save(connectionArg.capture());
-        assertEquals(connectionArg.getValue().getToBeConnectedWithUserId(), toBeConnectedWithUserId);
-        assertEquals(connectionArg.getValue().getRequestingUserId(), requestingUserId);
-        assertThat(expectedOutgoingMsg).usingRecursiveComparison().isEqualTo(outgoing);
-    }
-
-    @Test
-    public void handleConnectionIntentWhenConnectionIntentDenied() {
-        Long requestingUserId = 1L;
-        Long toBeConnectedWithUserId = 2L;
-        String connectionIntent = "denied";
-        ArrayList<Long> recipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-        ConnectOutgoingMessageDTO expectedOutgoingMsg = ConnectOutgoingMessageDTO.builder().connectionError(true).to(recipients).message("Connection request denied.").build();
-        ConnectService connectServiceSpy = spy(connectService);
-        ConnectOutgoingMessageDTO outgoing = connectServiceSpy.handleConnectionIntent(connectionIntent, requestingUserId, toBeConnectedWithUserId);
-
-        verify(connectServiceSpy, never()).saveConnectionDetails(Mockito.any(), Mockito.any());
-        verify(connectionsRepository, never()).save(Mockito.any());
-        assertThat(expectedOutgoingMsg).isEqualToComparingFieldByField(outgoing);
     }
 
     @Test
@@ -249,7 +158,7 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
         ConnectService connectServiceSpy = spy(connectService);
         Optional<String> qrCodeOpt = Optional.of("ABCDEFGHIJKL");
         String providedQRCode = "ABCDEFGHIJKL";
-        Long toBeConnectedWithUserId = 1L;
+        Long toBeConnectedWithUserId = USER1_ID;
         doReturn(qrCodeOpt).when(connectServiceSpy).getQRCodeString(anyLong());
         Boolean isValid = connectServiceSpy.validateQRCode(providedQRCode, toBeConnectedWithUserId);
         assertTrue(isValid);
@@ -257,59 +166,121 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void removeConnectionHappyPath() {
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = 1L;
-        connectionDeleteRequest.connectedWithUserId = 2L;
-        ArgumentCaptor<Long> requestingUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> connectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        assertTrue(connectService.removeConnection(connectionDeleteRequest));
-        verify(connectionsRepository, times(1)).removeConnection(requestingUserIdCaptor.capture(), connectedWithUserIdCaptor.capture());
-        assertEquals(requestingUserIdCaptor.getValue(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectedWithUserIdCaptor.getValue(), connectionDeleteRequest.connectedWithUserId);
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER2_ID;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+        doNothing().when(connectionsRepository).delete(Mockito.any());
+
+        ArgumentCaptor<Connection> connectionCaptor = ArgumentCaptor.forClass(Connection.class);
+
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
+
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(connectionsRepository, times(1)).delete(connectionCaptor.capture());
+        assertEquals(connectionCaptor.getValue().getRequestingUserId(), requestingUserId);
+        assertEquals(connectionCaptor.getValue().getToBeConnectedWithUserId(), connectedWithUserId);
     }
 
     @Test
     public void removeConnectionWhenDatabaseDeleteFails() {
-        ConnectionRemovalRequest connectionDeleteRequest = new ConnectionRemovalRequest();
-        connectionDeleteRequest.requestingUserId = 1L;
-        connectionDeleteRequest.connectedWithUserId = 2L;
-        ArgumentCaptor<Long> requestingUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> connectedWithUserIdCaptor = ArgumentCaptor.forClass(Long.class);
-        doThrow(new IllegalArgumentException("Database delete failed.")).when(connectionsRepository).removeConnection(anyLong(), anyLong());
-        assertFalse(connectService.removeConnection(connectionDeleteRequest));
-        verify(connectionsRepository, times(1)).removeConnection(requestingUserIdCaptor.capture(), connectedWithUserIdCaptor.capture());
-        assertEquals(requestingUserIdCaptor.getValue(), connectionDeleteRequest.requestingUserId);
-        assertEquals(connectedWithUserIdCaptor.getValue(), connectionDeleteRequest.connectedWithUserId);
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER2_ID;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .responseMessage("Database delete failed.")
+                .booleanMessage(false)
+                .build();
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+
+        doThrow(new IllegalArgumentException("Database delete failed.")).when(connectionsRepository).delete(Mockito.any());
+
+        ArgumentCaptor<Connection> connectionArgumentCaptor = ArgumentCaptor.forClass(Connection.class);
+
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
+
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(connectionsRepository, times(1)).delete(connectionArgumentCaptor.capture());
+        assertEquals(connectionArgumentCaptor.getValue().getRequestingUserId(), requestingUserId);
+        assertEquals(connectionArgumentCaptor.getValue().getToBeConnectedWithUserId(), connectedWithUserId);
     }
 
     @Test
-    public void removeConnectionWhenBothIdsAreTheSame() {
-        ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
-        connectionRemovalRequest.requestingUserId = 1L;
-        connectionRemovalRequest.connectedWithUserId = 1L;
-        assertFalse(connectService.removeConnection(connectionRemovalRequest));
-        verify(connectionsRepository, never()).removeConnection(anyLong(), anyLong());
+    public void removeConnectionWhenConnectionInvalid() {
+
+        Long requestingUserId = USER1_ID;
+        Long connectedWithUserId = USER1_ID;
+
+        GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
+                .responseMessage("message")
+                .booleanMessage(false)
+                .build();
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(Optional.of(expectedDTO)).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+
+        GenericResponseDTO actualDTO = connectServiceSpy.removeConnection(requestingUserId, connectedWithUserId);
+
+        assertThat(expectedDTO).usingRecursiveComparison().isEqualTo(actualDTO);
+        verify(connectionsRepository, never()).delete(Mockito.any());
     }
 
+    @Test
     public void testGetAllConnectionsForAUserWhenConnectionsExist() {
-        Long toBeConnectedUserId = 2L;
+        // mock data
+        Long user1 = USER1_ID;
+        Long user2 = USER2_ID;
 
-        Connection connection = new Connection();
-        connection.setCreated();
-        connection.setRequestingUserId(1L);
-        connection.setToBeConnectedWithUserId(toBeConnectedUserId);
+        Connection whenUser1AsToBeConnectedWith = new Connection();
+        whenUser1AsToBeConnectedWith.setCreated();
+        whenUser1AsToBeConnectedWith.setRequestingUserId(user2);
+        whenUser1AsToBeConnectedWith.setToBeConnectedWithUserId(user1);
 
-        when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(List.of(connection));
+        Connection whenUser1AsRequesting = new Connection();
+        whenUser1AsRequesting.setCreated();
+        whenUser1AsRequesting.setRequestingUserId(user1);
+        whenUser1AsRequesting.setToBeConnectedWithUserId(user2);
 
         List<ConnectOutgoingMessageDTO> expectedOutgoingMessageDTOS = new ArrayList<>();
-        ConnectOutgoingMessageDTO outgoingMessage = ConnectOutgoingMessageDTO.builder()
+
+        ConnectOutgoingMessageDTO outgoingMessageWhenUser1IsToBeConnectedWith = ConnectOutgoingMessageDTO.builder()
                 .connectionSuccess(true)
-                .to(new ArrayList<>(Collections.singletonList(connection.getRequestingUserId())))
+                .to(UsernameConnectionStatusDTO.builder()
+                        .userId(user2)
+                        .username(USER2_NAME)
+                        .userConnectionStatus(Constants.REQUESTING_USER)
+                        .build())
                 .message("")
                 .build();
-        expectedOutgoingMessageDTOS.add(outgoingMessage);
+        expectedOutgoingMessageDTOS.add(outgoingMessageWhenUser1IsToBeConnectedWith);
 
-        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(toBeConnectedUserId);
+        ConnectOutgoingMessageDTO outGoingMessageWhenUser1IsRequesting = ConnectOutgoingMessageDTO.builder()
+                .connectionSuccess(true)
+                .to(UsernameConnectionStatusDTO.builder()
+                        .userId(user2)
+                        .username(USER2_NAME)
+                        .userConnectionStatus(Constants.TO_BE_CONNECTED_WITH_USER)
+                        .build())
+                .message("")
+                .build();
+        expectedOutgoingMessageDTOS.add(outGoingMessageWhenUser1IsRequesting);
+
+        // mock returns
+        when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(List.of(whenUser1AsToBeConnectedWith));
+        when(connectionsRepository.findAllByRequestingUserId(anyLong())).thenReturn(List.of(whenUser1AsRequesting));
+        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(getUser2())).thenReturn(Optional.of(getUser2()));
+
+        // test
+        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(user1);
 
         assertThat(actualMessageDTOs).usingRecursiveComparison().isEqualTo(expectedOutgoingMessageDTOS);
 
@@ -317,20 +288,23 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testGetAllConnectionsForAUserWhenConnectionsDoNotExist() {
-        Long toBeConnectedUserId = 2L;
+        Long User1 = USER1_ID;
 
         when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(Collections.emptyList());
+        when(connectionsRepository.findAllByRequestingUserId(anyLong())).thenReturn(Collections.emptyList());
 
-        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(toBeConnectedUserId);
+        List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(User1);
 
         assertThat(actualMessageDTOs).usingRecursiveComparison().isEqualTo(Collections.emptyList());
-
+        verify(connectionsRepository, times(1)).findAllByToBeConnectedWithUserId(anyLong());
+        verify(connectionsRepository, times(1)).findAllByRequestingUserId(anyLong());
+        verify(userRepository, times(0)).findById(anyLong());
     }
 
     @Test
     public void validateQRCodeWhenQRCodeIsEmpty() {
         String qrcodePhrase = "";
-        Long userId = 1L;
+        Long userId = USER1_ID;
         when(cacheService.get(any(), any())).thenReturn("");
         boolean isValidQRCode = connectService.validateQRCode(qrcodePhrase, userId);
         assertFalse(isValidQRCode);
@@ -339,7 +313,7 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
     @Test
     public void validateQRCodeWhenQRCodeIsValid() {
         String qrcodePhrase = "ABCDE";
-        Long userId = 1L;
+        Long userId = USER1_ID;
         when(cacheService.get(any(), any())).thenReturn(qrcodePhrase);
         boolean isValidQRCode = connectService.validateQRCode(qrcodePhrase, userId);
         assertTrue(isValidQRCode);
@@ -348,9 +322,103 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
     @Test
     public void validateQRCodeWhenNoQRCodeIsCached() {
         String qrcodePhrase = "ABCDE";
-        Long userId = 1L;
+        Long userId = USER1_ID;
         when(cacheService.get(any(), any())).thenReturn(null);
         boolean isValidQRCode = connectService.validateQRCode(qrcodePhrase, userId);
         assertFalse(isValidQRCode);
+    }
+
+    @Test
+    public void testConnectInvalidQRcode() {
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+            .booleanMessage(false)
+            .responseMessage("Unable to validate QR code.")
+                .build();
+
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(false).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId,toBeConnectedWithUserId,qrcodePhrase);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectServiceSpy, never()).validateConnection(anyLong(),anyLong());
+        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(),anyLong());
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectInvalidConnection(){
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("message")
+                .build();
+
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.of(genericResponseDTO)).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectionsRepository, never()).findExistingConnectionWithReversedUserIds(anyLong(),anyLong());
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectExistingConnectionWithReverseIds(){
+
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
+
+        Connection existingConnection = new Connection();
+        existingConnection.setRequestingUserId(USER2_ID);
+        existingConnection.setToBeConnectedWithUserId((USER1_ID));
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(false)
+                .responseMessage("This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId)
+                .build();
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.of(existingConnection));
+
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+        verify(connectServiceSpy,never()).saveConnectionDetails(anyLong(),anyLong());
+    }
+
+    @Test
+    public void testConnectHappyPath(){
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder()
+                .booleanMessage(true)
+                .build();
+
+        Long requestingUserId = USER1_ID;
+        Long toBeConnectedWithUserId = USER2_ID;
+        String qrcodePhrase = "test";
+
+        ConnectService connectServiceSpy = spy(connectService);
+        doReturn(true).when(connectServiceSpy).validateQRCode(Mockito.any(),Mockito.any());
+        doReturn(Optional.empty()).when(connectServiceSpy).validateConnection(Mockito.any(),Mockito.any());
+        when(connectionsRepository.findExistingConnectionWithReversedUserIds(anyLong(),anyLong())).thenReturn(Optional.empty());
+
+        GenericResponseDTO result = connectServiceSpy.connect(requestingUserId, toBeConnectedWithUserId, qrcodePhrase);
+
+        assertThat(genericResponseDTO).usingRecursiveComparison().isEqualTo(result);
+
     }
 }

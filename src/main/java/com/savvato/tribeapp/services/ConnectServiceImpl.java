@@ -1,21 +1,23 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
-import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
+import com.savvato.tribeapp.dto.GenericResponseDTO;
+import com.savvato.tribeapp.dto.UsernameConnectionStatusDTO;
+import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.Connection;
 import com.savvato.tribeapp.repositories.ConnectionsRepository;
 import com.savvato.tribeapp.repositories.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class ConnectServiceImpl implements ConnectService {
 
@@ -23,15 +25,13 @@ public class ConnectServiceImpl implements ConnectService {
     CacheService cache;
 
     @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
-
-    @Autowired
     ConnectionsRepository connectionsRepository;
 
     @Autowired
     UserRepository userRepository;
 
-    private static final Log logger = LogFactory.getLog(ConnectServiceImpl.class);
+    @Autowired
+    UserService userService;
 
     private final int QRCODE_STRING_LENGTH = 12;
 
@@ -46,7 +46,7 @@ public class ConnectServiceImpl implements ConnectService {
         String generatedQRCodeString = generateRandomString(QRCODE_STRING_LENGTH);
         String userIdToCacheKey = String.valueOf(userId);
         cache.put("ConnectQRCodeString", userIdToCacheKey, generatedQRCodeString);
-        logger.debug("User ID: " + userId + " ConnectQRCodeString: " + generatedQRCodeString);
+        log.debug("User ID: " + userId + " ConnectQRCodeString: " + generatedQRCodeString);
         return Optional.of(generatedQRCodeString);
     }
 
@@ -61,13 +61,7 @@ public class ConnectServiceImpl implements ConnectService {
     }
 
     public boolean saveConnectionDetails(Long requestingUserId, Long toBeConnectedWithUserId) {
-        if (requestingUserId.equals(toBeConnectedWithUserId)) {
-            return false;
-        }
-        Optional<Connection> existingConnectionWithReversedIds = connectionsRepository.findExistingConnectionWithReversedUserIds(requestingUserId, toBeConnectedWithUserId);
-        if (existingConnectionWithReversedIds.isPresent()) {
-            return false;
-        }
+
         try {
             connectionsRepository.save(new Connection(requestingUserId, toBeConnectedWithUserId));
             return true;
@@ -81,80 +75,114 @@ public class ConnectServiceImpl implements ConnectService {
         return qrcodePhrase.equals(getQRCodeString(toBeConnectedWithUserId).orElse("")) && StringUtils.isNotBlank(qrcodePhrase);
     }
 
-    @MessageMapping("/connect/room")
-    public void connect(ConnectIncomingMessageDTO incoming) {
-        if (!validateQRCode(incoming.qrcodePhrase, incoming.toBeConnectedWithUserId)) {
-            ConnectOutgoingMessageDTO msg = ConnectOutgoingMessageDTO.builder()
-                    .connectionError(true)
-                    .message("Invalid QR code; failed to connect.")
-                    .build();
-            simpMessagingTemplate.convertAndSendToUser(
-                    String.valueOf(incoming.toBeConnectedWithUserId),
-                    "/connect/user/queue/specific-user",
-                    msg);
-        } else {
-            ConnectOutgoingMessageDTO outgoingMsg = handleConnectionIntent(incoming.connectionIntent, incoming.requestingUserId, incoming.toBeConnectedWithUserId);
-            for (Long userId : outgoingMsg.to) {
-                simpMessagingTemplate.convertAndSendToUser(
-                        String.valueOf(userId),
-                        "/connect/user/queue/specific-user",
-                        outgoingMsg);
-            }
+    @Override
+    public GenericResponseDTO connect(Long requestingUserId, Long toBeConnectedWithUserId, String qrcodePhrase) {
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
+
+        if (!validateQRCode(qrcodePhrase, toBeConnectedWithUserId)) {
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "Unable to validate QR code.";
+            return genericResponseDTO;
         }
+
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(requestingUserId,toBeConnectedWithUserId);
+
+        if (optValidateConnection.isPresent()) {
+            return optValidateConnection.get();
+        }
+
+        Optional<Connection> existingConnectionWithReversedIds =
+                connectionsRepository.findExistingConnectionWithReversedUserIds(requestingUserId,
+                        toBeConnectedWithUserId);
+
+        if (existingConnectionWithReversedIds.isPresent()) {
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "This connection already exists in reverse between the requesting user " + requestingUserId + " and the to be connected with user " + toBeConnectedWithUserId;
+            return genericResponseDTO;
+        }
+
+        genericResponseDTO.booleanMessage = saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
+
+        return genericResponseDTO;
     }
 
-    public ConnectOutgoingMessageDTO handleConnectionIntent(String connectionIntent, Long requestingUserId, Long toBeConnectedWithUserId) {
-        if (connectionIntent == "") {
-            List<Long> recipients = new ArrayList<>(Collections.singletonList(toBeConnectedWithUserId));
-            return ConnectOutgoingMessageDTO.builder().message("Please confirm that you wish to connect.").to(recipients).build();
-        } else if (connectionIntent == "confirmed") {
-            Boolean connectionStatus = saveConnectionDetails(requestingUserId, toBeConnectedWithUserId);
-            List<Long> recipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-            if (connectionStatus) {
-                return ConnectOutgoingMessageDTO.builder()
-                        .connectionSuccess(true)
-                        .to(recipients)
-                        .message("Successfully saved connection!").build();
-            } else {
-                return ConnectOutgoingMessageDTO.builder()
-                        .connectionError(true)
-                        .to(recipients)
-                        .message("Failed to save connection to database.").build();
-            }
-        } else if (connectionIntent == "denied") {
-            List<Long> recipients = new ArrayList<>(Arrays.asList(requestingUserId, toBeConnectedWithUserId));
-            return ConnectOutgoingMessageDTO.builder()
-                    .connectionError(true)
-                    .to(recipients)
-                    .message("Connection request denied.").build();
-
-        }
-        return null;
-    }
-
+    @Override
     public List<ConnectOutgoingMessageDTO> getAllConnectionsForAUser(Long userId) {
-        List<Connection> connections = connectionsRepository.findAllByToBeConnectedWithUserId(userId);
         List<ConnectOutgoingMessageDTO> outgoingMessages = new ArrayList<>();
-        for (Connection connection : connections) {
+
+        List<Connection> connectionsWhenUserIsToBeConnectedWith = connectionsRepository.findAllByToBeConnectedWithUserId(userId);
+        for (Connection connection : connectionsWhenUserIsToBeConnectedWith) {
             ConnectOutgoingMessageDTO outgoingMessage = ConnectOutgoingMessageDTO.builder()
                     .connectionSuccess(true)
-                    .to(new ArrayList<>(Collections.singletonList(connection.getRequestingUserId())))
+                    .to(UsernameConnectionStatusDTO.builder()
+                            .userId(connection.getRequestingUserId())
+                            .username(userRepository.findById(connection.getRequestingUserId()).get().getName())
+                            .userConnectionStatus(Constants.REQUESTING_USER)
+                            .build())
                     .message("")
                     .build();
             outgoingMessages.add(outgoingMessage);
         }
+
+        List<Connection> connectionsWhenUserIsRequestingConnection = connectionsRepository.findAllByRequestingUserId(userId);
+        for (Connection connection : connectionsWhenUserIsRequestingConnection) {
+            ConnectOutgoingMessageDTO outgoingMessageDTO = ConnectOutgoingMessageDTO.builder()
+                    .connectionSuccess(true)
+                    .to(UsernameConnectionStatusDTO.builder()
+                            .userId(connection.getToBeConnectedWithUserId())
+                            .username(userRepository.findById(connection.getToBeConnectedWithUserId()).get().getName())
+                            .userConnectionStatus(Constants.TO_BE_CONNECTED_WITH_USER)
+                            .build())
+                    .message("")
+                    .build();
+            outgoingMessages.add(outgoingMessageDTO);
+        }
+
         return outgoingMessages;
     }
+    @Override
+    public GenericResponseDTO removeConnection(Long requestingUserId, Long connectedWithUserId) {
 
-    public boolean removeConnection(ConnectionRemovalRequest connectionRemovalRequest) {
-        if (Objects.equals(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId)) {
-            return false;
+        Optional<GenericResponseDTO> optValidateConnection = validateConnection(requestingUserId, connectedWithUserId);
+
+        if (optValidateConnection.isPresent()) {
+            return optValidateConnection.get();
         }
+
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
+
         try {
-            connectionsRepository.removeConnection(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId);
-            return true;
+            Connection connection = new Connection(requestingUserId, connectedWithUserId);
+            connectionsRepository.delete(connection);
+            genericResponseDTO.booleanMessage = true;
         } catch (Exception e) {
-            return false;
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = e.getMessage();
         }
+
+        return genericResponseDTO;
+    }
+
+    @Override
+    public Optional<GenericResponseDTO> validateConnection(Long requestingUserId, Long toBeConnectedWithUserId) {
+        GenericResponseDTO genericResponseDTO = GenericResponseDTO.builder().build();
+        Long loggedInUser = userService.getLoggedInUserId();
+
+        if (!loggedInUser.equals(requestingUserId)) {
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage =
+                    "The logged in user (" + loggedInUser + ") does not match requesting user (" + requestingUserId +
+                            ")";
+            return Optional.of(genericResponseDTO);
+        }
+
+        if (requestingUserId.equals(toBeConnectedWithUserId)) {
+            genericResponseDTO.booleanMessage = false;
+            genericResponseDTO.responseMessage = "User " + requestingUserId + " may not have a connection to themselves";
+            return Optional.of(genericResponseDTO);
+        }
+
+        return Optional.empty();
     }
 }

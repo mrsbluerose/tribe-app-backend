@@ -1,14 +1,14 @@
 package com.savvato.tribeapp.controllers;
 
-import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.controllers.annotations.controllers.ConnectAPIController.*;
+import com.savvato.tribeapp.controllers.annotations.responses.BadRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
+import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.controllers.dto.CosignRequest;
-import com.savvato.tribeapp.dto.ConnectIncomingMessageDTO;
-import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
-import com.savvato.tribeapp.dto.CosignDTO;
+import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.services.ConnectService;
 import com.savvato.tribeapp.services.CosignService;
+import com.savvato.tribeapp.services.GenericResponseService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -35,6 +35,9 @@ public class ConnectAPIController {
 
   @Autowired
   CosignService cosignService;
+
+  @Autowired
+  GenericResponseService genericResponseService;
 
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<String> handleNoSuchElementException(NoSuchElementException ex) {
@@ -75,35 +78,71 @@ public class ConnectAPIController {
 
   @Connect
   @PostMapping
-  public boolean connect(@RequestBody @Valid ConnectRequest connectRequest) {
-    if (connectService.validateQRCode(connectRequest.qrcodePhrase, connectRequest.toBeConnectedWithUserId)) {
-      return connectService.saveConnectionDetails(connectRequest.requestingUserId, connectRequest.toBeConnectedWithUserId);
+  public ResponseEntity<GenericResponseDTO> connect(@RequestBody @Valid ConnectRequest connectRequest) {
+    GenericResponseDTO connection = connectService.connect(connectRequest.requestingUserId,connectRequest.toBeConnectedWithUserId,connectRequest.qrcodePhrase);
+
+    if(connection.booleanMessage) {
+      return ResponseEntity.status(HttpStatus.OK).body(connection);
     } else {
-      return false;
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(connection);
     }
   }
 
-  @MessageMapping("/connect/room")
-  public void connect(@Payload ConnectIncomingMessageDTO incoming, @Header("simpSessionId") String sessionId) {
-      connectService.connect(incoming);
+  @RemoveConnection
+  @DeleteMapping
+  public ResponseEntity<GenericResponseDTO> removeConnection(@RequestBody @Valid ConnectionRemovalRequest connectionRemovalRequest) {
+    GenericResponseDTO rtn = connectService.removeConnection(connectionRemovalRequest.requestingUserId, connectionRemovalRequest.connectedWithUserId);
+
+    if (rtn.booleanMessage) {
+      return ResponseEntity.ok().body(rtn);
+    } else {
+      return ResponseEntity.badRequest().body(rtn);
+    }
+    
   }
 
   @SaveCosign
   @PostMapping("/cosign")
-  public ResponseEntity<CosignDTO> saveCosign(@RequestBody @Valid CosignRequest cosignRequest) {
+  public ResponseEntity saveCosign(@RequestBody @Valid CosignRequest cosignRequest) {
 
-      CosignDTO cosignDTO = cosignService.saveCosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
-      
-      return ResponseEntity.status(HttpStatus.OK).body(cosignDTO);
+    Optional opt = cosignService.cosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
 
+    if(opt.get() instanceof GenericResponseDTO) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(opt.get());
+    }
+
+    return ResponseEntity.status(HttpStatus.OK).body(opt.get());
   }
   @DeleteCosign
   @DeleteMapping("/cosign")
-  public ResponseEntity deleteCosign(@RequestBody @Valid CosignRequest cosignRequest) throws Exception {
+  public ResponseEntity<GenericResponseDTO> deleteCosign(@RequestBody @Valid CosignRequest cosignRequest) throws Exception {
 
-    cosignService.deleteCosign(cosignRequest.userIdIssuing, cosignRequest.userIdReceiving, cosignRequest.phraseId);
+    GenericResponseDTO rtn = cosignService.deleteCosign(cosignRequest.userIdIssuing,cosignRequest.userIdReceiving,cosignRequest.phraseId);
 
-    return ResponseEntity.status(HttpStatus.OK).build();
+    if (rtn.booleanMessage) {
+      return ResponseEntity.ok().body(rtn);
+    } else {
+      return ResponseEntity.badRequest().body(rtn);
+    }
 
   }
+
+  @GetCosignersForUserAttribute
+  @GetMapping("cosign/{userIdReceiving}/{phraseId}")
+  public ResponseEntity<List<UsernameDTO>> getCosignersForUserAttribute(@PathVariable Long userIdReceiving, @PathVariable Long phraseId) {
+
+    List<UsernameDTO> list = cosignService.getCosignersForUserAttribute(userIdReceiving,phraseId);
+
+    return ResponseEntity.status(HttpStatus.OK).body(list);
+  }
+
+  @GetAllCosignsForUser
+  @GetMapping("cosign/{userIdReceiving}/all")
+  public ResponseEntity<List<CosignsForUserDTO>> getAllCosignsForUser(@PathVariable Long userIdReceiving) {
+
+    List<CosignsForUserDTO> list = cosignService.getAllCosignsForUser(userIdReceiving);
+
+    return ResponseEntity.status(HttpStatus.OK).body(list);
+  }
+
 }
