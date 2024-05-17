@@ -10,23 +10,35 @@ import java.util.Set;
 public abstract class AbstractTestConstants {
     public static long USER1_ID = 1;
     public static long USER2_ID = 732;
+    public static long USER3_ID = 3;
+
     public static String USER1_EMAIL = "user1@email.com";
     public static String USER2_EMAIL = "user2@email.com";
+    public static String USER3_EMAIL = "user3@email.com";
+
     public static String USER1_PHONE = "0035551212"; // starts with 0 to indicate to the code that this is a test
     public static String USER2_PHONE = "0035551213"; // starts with 0 to indicate to the code that this is a test
+    public static String USER3_PHONE = "0035551214"; // starts with 0 to indicate to the code that this is a test
+
     public static String USER1_PASSWORD = "password1";
     public static String USER2_PASSWORD = "password2";
-    public static int USER_IS_ENABLED = 1;
-    public static String USER1_PREFERRED_CONTACT_METHOD = "email";
+    public static String USER3_PASSWORD = "password3";
 
+    public static int USER_IS_ENABLED = 1;
+
+    public static String USER1_PREFERRED_CONTACT_METHOD = "email";
     public static String USER2_PREFERRED_CONTACT_METHOD = "phone";
+    public static String USER3_PREFERRED_CONTACT_METHOD = "phone";
 
     public static String USER1_NAME = "Fake A. Admin";
     public static String USER2_NAME = "Fake R. User"; // the R stand for Regular
+    public static String USER3_NAME = "Fake F. AdminUser"; //the F stands for Full Admin and Account holder
 
     // Phrase1 and matching word ids
     public static long WORD_TABLE_INITIAL_ID = 100L;
     public static long PHRASE1_ID = 1L;
+    public static long PHRASE2_ID = 2L;
+    public static long PHRASE3_ID = 3L;
 
     public Set<UserRole> getUserRoles_AccountHolder() {
         Set<UserRole> rtn = new HashSet<>();
@@ -85,6 +97,22 @@ public abstract class AbstractTestConstants {
         return rtn;
     }
 
+    public User getUser3() {
+        User rtn = new User();
+
+        rtn.setId(USER3_ID);
+        rtn.setName(USER3_NAME);
+        rtn.setEmail(USER3_EMAIL);
+        rtn.setPhone(USER3_PHONE);
+        rtn.setPassword(USER3_PASSWORD);
+        rtn.setEnabled(USER_IS_ENABLED);
+        rtn.setCreated();
+        rtn.setLastUpdated();
+        rtn.setRoles(getUserRoles_Admin_AccountHolder());
+
+        return rtn;
+    }
+
     public UsernameDTO getUsernameDTOForUserID(Long userId) {
         if (userId == USER1_ID) {
             return UsernameDTO.builder()
@@ -95,6 +123,11 @@ public abstract class AbstractTestConstants {
             return UsernameDTO.builder()
                     .userId(USER2_ID)
                     .username(USER2_NAME)
+                    .build();
+        } else if (userId == USER3_ID) {
+            return UsernameDTO.builder()
+                    .userId(USER3_ID)
+                    .username(USER3_NAME)
                     .build();
         } else {
             return null;
@@ -141,6 +174,26 @@ public abstract class AbstractTestConstants {
     public Phrase getTestPhrase1() {
         Phrase testPhrase = new Phrase();
         testPhrase.setId(PHRASE1_ID);
+        testPhrase.setAdverbId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setVerbId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setPrepositionId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setNounId(WORD_TABLE_INITIAL_ID);
+        return testPhrase;
+    }
+
+    public Phrase getTestPhrase2() {
+        Phrase testPhrase = new Phrase();
+        testPhrase.setId(PHRASE2_ID);
+        testPhrase.setAdverbId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setVerbId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setPrepositionId(WORD_TABLE_INITIAL_ID);
+        testPhrase.setNounId(WORD_TABLE_INITIAL_ID);
+        return testPhrase;
+    }
+
+    public Phrase getTestPhrase3() {
+        Phrase testPhrase = new Phrase();
+        testPhrase.setId(PHRASE3_ID);
         testPhrase.setAdverbId(WORD_TABLE_INITIAL_ID);
         testPhrase.setVerbId(WORD_TABLE_INITIAL_ID);
         testPhrase.setPrepositionId(WORD_TABLE_INITIAL_ID);

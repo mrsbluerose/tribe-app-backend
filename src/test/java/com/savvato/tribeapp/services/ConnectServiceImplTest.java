@@ -136,7 +136,7 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testValidateConnectionWhenRequestingUserNotLoggedIn() {
-        Long loggedInUser = 3L;
+        Long loggedInUser = USER3_ID;
         Long requestingUserId = USER1_ID;
         Long toBeConnectedWithUserId = USER2_ID;
         GenericResponseDTO expectedGenericResponseDTO = GenericResponseDTO.builder()

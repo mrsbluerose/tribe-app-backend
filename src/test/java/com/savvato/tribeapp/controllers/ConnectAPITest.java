@@ -3,13 +3,12 @@ package com.savvato.tribeapp.controllers;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.controllers.dto.CosignRequest;
 import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.repositories.CosignRepository;
 import com.savvato.tribeapp.services.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ConnectAPIController.class)
-public class ConnectAPITest {
+public class ConnectAPITest extends AbstractTestConstants {
     private User user;
     @Autowired
     private MockMvc mockMvc;
@@ -81,25 +80,13 @@ public class ConnectAPITest {
                         .apply(springSecurity())
                         .build();
 
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
+        user = getUser3();
 
-        user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
     }
 
     @Test
     public void getQrCodeStringHappyPath() throws Exception {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         String qrCode = "ABCDEFGHIJKL";
 
         when(connectService.storeQRCodeString(anyLong())).thenReturn(Optional.of(qrCode));
@@ -124,7 +111,7 @@ public class ConnectAPITest {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         when(connectService.storeQRCodeString(anyLong())).thenReturn(Optional.empty());
 
         this.mockMvc
@@ -149,8 +136,8 @@ public class ConnectAPITest {
                 .booleanMessage(true)
                 .build();
 
-        connectRequest.requestingUserId = 1L;
-        connectRequest.toBeConnectedWithUserId = 2L;
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
         when(connectService.connect(anyLong(), anyLong(), anyString())).thenReturn(expectedGenericResponseDTO);
@@ -158,6 +145,9 @@ public class ConnectAPITest {
         ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> toBeConnectedWithUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<String> qrcodePhraseArgumentCaptor = ArgumentCaptor.forClass(String.class);
+
+        String template = "{\"booleanMessage\": %b}";
+        String expectedMessage = String.format(template, true);
 
         this.mockMvc
                 .perform(
@@ -167,7 +157,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("booleanMessage").value((true)))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
         verify(connectService, times(1)).connect(requestingUserIdArgumentCaptor.capture(), toBeConnectedWithUserIdArgumentCaptor.capture(), qrcodePhraseArgumentCaptor.capture());
         assertThat(requestingUserIdArgumentCaptor.getValue()).isEqualTo(connectRequest.requestingUserId);
@@ -186,11 +176,14 @@ public class ConnectAPITest {
                 .responseMessage("response message")
                 .build();
 
-        connectRequest.requestingUserId = 1L;
-        connectRequest.toBeConnectedWithUserId = 2L;
+        connectRequest.requestingUserId = USER1_ID;
+        connectRequest.toBeConnectedWithUserId = USER2_ID;
         connectRequest.qrcodePhrase = "ABCDEFGHIJKL";
 
         when(connectService.connect(anyLong(), anyLong(), anyString())).thenReturn(expectedGenericResponseDTO);
+
+        String template = "{\"booleanMessage\": %b, \"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, false, "response message");
 
         this.mockMvc
                 .perform(
@@ -200,8 +193,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("booleanMessage").value((false)))
-                .andExpect(jsonPath("responseMessage").value(("response message")))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
 
     }
@@ -212,9 +204,9 @@ public class ConnectAPITest {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
 
-        Long testUserIdIssuing = 1L;
-        Long testUserIdReceiving = 2L;
-        Long testPhraseId = 1L;
+        Long testUserIdIssuing = USER1_ID;
+        Long testUserIdReceiving = USER2_ID;
+        Long testPhraseId = PHRASE1_ID;
 
         CosignDTO mockCosignDTO = CosignDTO.builder().build();
         mockCosignDTO.userIdIssuing = testUserIdIssuing;
@@ -228,6 +220,9 @@ public class ConnectAPITest {
 
         when(cosignService.cosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.of(mockCosignDTO));
 
+        String template = "{\"userIdIssuing\": %d},\"userIdReceiving\": %d,\"phraseId\": %d}";
+        String expectedMessage = String.format(template, USER1_ID, USER2_ID, PHRASE1_ID);
+
         this.mockMvc
                 .perform(
                         post("/api/connect/cosign")
@@ -236,7 +231,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("{\"userIdIssuing\":1,\"userIdReceiving\":2,\"phraseId\":1}"));
+                .andExpect(content().json(expectedMessage));
 
     }
 
@@ -246,9 +241,9 @@ public class ConnectAPITest {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
 
-        Long testUserIdIssuing = 1L;
-        Long testUserIdReceiving = 1L;
-        Long testPhraseId = 1L;
+        Long testUserIdIssuing = USER1_ID;
+        Long testUserIdReceiving = USER2_ID;
+        Long testPhraseId = PHRASE1_ID;
 
         CosignRequest cosignRequest = new CosignRequest();
         cosignRequest.userIdIssuing = testUserIdIssuing;
@@ -262,6 +257,9 @@ public class ConnectAPITest {
 
         when(cosignService.cosign(anyLong(), anyLong(), anyLong())).thenReturn(Optional.of(expectedGenericResponseDTO));
 
+        String template = "{\"booleanMessage\": %b, \"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, false, "response message");
+
         this.mockMvc
                 .perform(
                         post("/api/connect/cosign")
@@ -270,7 +268,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().json("{\"responseMessage\":\"response message\", \"booleanMessage\":false}"));
+                .andExpect(content().json(expectedMessage));
     }
 
     @Test
@@ -280,9 +278,9 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         CosignRequest cosignRequest = new CosignRequest();
-        cosignRequest.userIdIssuing = 1L;
-        cosignRequest.userIdReceiving = 2L;
-        cosignRequest.phraseId = 1L;
+        cosignRequest.userIdIssuing = USER1_ID;
+        cosignRequest.userIdReceiving = USER2_ID;
+        cosignRequest.phraseId = PHRASE1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .booleanMessage(false)
@@ -290,6 +288,9 @@ public class ConnectAPITest {
                 .build();
 
         when(cosignService.deleteCosign(anyLong(),anyLong(),anyLong())).thenReturn(expectedDTO);
+
+        String template = "{\"booleanMessage\": %b, \"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, false, "response message");
 
         this.mockMvc
                 .perform(
@@ -299,8 +300,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("booleanMessage").value((false)))
-                .andExpect(jsonPath("responseMessage").value(("response message")));
+                .andExpect(content().json(expectedMessage));
     }
 
     @Test
@@ -310,15 +310,18 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         CosignRequest cosignRequest = new CosignRequest();
-        cosignRequest.userIdIssuing = 1L;
-        cosignRequest.userIdReceiving = 2L;
-        cosignRequest.phraseId = 1L;
+        cosignRequest.userIdIssuing = USER1_ID;
+        cosignRequest.userIdReceiving = USER2_ID;
+        cosignRequest.phraseId = PHRASE1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .booleanMessage(true)
                 .build();
 
         when(cosignService.deleteCosign(anyLong(),anyLong(),anyLong())).thenReturn(expectedDTO);
+
+        String template = "{\"booleanMessage\": %b}";
+        String expectedMessage = String.format(template, true);
 
         this.mockMvc
                 .perform(
@@ -328,7 +331,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("booleanMessage").value((true)));
+                .andExpect(content().json(expectedMessage));
 
     }
     
@@ -337,8 +340,8 @@ public class ConnectAPITest {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long toBeConnectedWithUserId = 1L;
-        Long requestingUserId = 2L;
+        Long toBeConnectedWithUserId = USER1_ID;
+        User requestingUser = getUser2();
 
         ConnectOutgoingMessageDTO returnDTO = ConnectOutgoingMessageDTO
                 .builder()
@@ -346,8 +349,8 @@ public class ConnectAPITest {
                 .connectionSuccess(true)
                 .message("")
                 .to(UsernameDTO.builder()
-                        .userId(requestingUserId)
-                        .username("test")
+                        .userId(requestingUser.getId())
+                        .username(requestingUser.getName())
                         .build())
                 .build();
 
@@ -379,7 +382,7 @@ public class ConnectAPITest {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
 
-        Long userId = 1L;
+        Long userId = USER1_ID;
 
         when(connectService.getAllConnectionsForAUser(anyLong())).thenReturn(null);
 
@@ -401,8 +404,8 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
-        connectionRemovalRequest.requestingUserId = 1L;
-        connectionRemovalRequest.connectedWithUserId = 2L;
+        connectionRemovalRequest.requestingUserId = USER1_ID;
+        connectionRemovalRequest.connectedWithUserId = USER2_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .booleanMessage(true)
@@ -412,6 +415,8 @@ public class ConnectAPITest {
         ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> connectedWithIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
 
+        String template = "{\"booleanMessage\": %b}";
+        String expectedMessage = String.format(template, true);
 
         this.mockMvc
                 .perform(
@@ -421,7 +426,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("booleanMessage").value((true)))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
 
         verify(connectService, times(1)).removeConnection(requestingUserIdArgumentCaptor.capture(), connectedWithIdArgumentCaptor.capture());
@@ -437,8 +442,8 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         ConnectionRemovalRequest connectionRemovalRequest = new ConnectionRemovalRequest();
-        connectionRemovalRequest.requestingUserId = 1L;
-        connectionRemovalRequest.connectedWithUserId = 2L;
+        connectionRemovalRequest.requestingUserId = USER1_ID;
+        connectionRemovalRequest.connectedWithUserId = USER2_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
                 .booleanMessage(false)
@@ -449,6 +454,9 @@ public class ConnectAPITest {
         ArgumentCaptor<Long> requestingUserIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> connectedWithIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
 
+        String template = "{\"booleanMessage\": %b, \"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, false, "message");
+
         this.mockMvc
                 .perform(
                         delete("/api/connect")
@@ -457,8 +465,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("booleanMessage").value((false)))
-                .andExpect(jsonPath("responseMessage").value(("message")))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
 
         verify(connectService, times(1)).removeConnection(requestingUserIdArgumentCaptor.capture(), connectedWithIdArgumentCaptor.capture());
@@ -475,15 +482,14 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         // test data
-        Long testUserIdIssuing = 1L;
-        String testUsernameIssuing = "test";
-        Long testUserIdReceiving = 2L;
-        Long testPhraseId = 1L;
+        User testUserIssuing = getUser1();
+        Long testUserIdReceiving = USER2_ID;
+        Long testPhraseId = PHRASE1_ID;
 
         // mock return data
         UsernameDTO mockUsernameDTO = UsernameDTO.builder()
-                .userId(testUserIdIssuing)
-                .username(testUsernameIssuing)
+                .userId(testUserIssuing.getId())
+                .username(testUserIssuing.getName())
                 .build();
 
         List<UsernameDTO> mockUsernameDTOList = new ArrayList<>();
@@ -492,6 +498,10 @@ public class ConnectAPITest {
         // mock returns
         when(cosignService.getCosignersForUserAttribute(anyLong(),anyLong())).thenReturn(mockUsernameDTOList);
 
+        // expected result
+        String template = "[{\"userId\": %d,\"username\":\"%s\"}]";
+        String expectedMessage = String.format(template,USER1_ID, USER1_NAME);
+
         // test
         this.mockMvc
                 .perform(
@@ -499,7 +509,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[{\"userId\":1,\"username\":\"test\"}]"));
+                .andExpect(content().json(expectedMessage));
     }
 
     @Test
@@ -509,12 +519,9 @@ public class ConnectAPITest {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         // test data
-        Long testUserIdIssuing1 = 1L;
-        Long testUserIdIssuing2 = 2L;
-        Long testUserIdIssuing3 = 3L;
-        String testUsernameIssuing1 = "test1";
-        String testUsernameIssuing2 = "test2";
-        String testUsernameIssuing3 = "test3";
+        User testUserIssuing1 = getUser1();
+        User testUserIssuing2 = getUser2();
+        User testUserIssuing3 = getUser3();
         Long testPhraseId1 = 1L;
         Long testPhraseId2 = 2L;
         Long testPhraseId3 = 3L;
@@ -522,18 +529,18 @@ public class ConnectAPITest {
 
         // mock return data
         UsernameDTO mockUsernameDTO1 = UsernameDTO.builder()
-                .userId(testUserIdIssuing1)
-                .username(testUsernameIssuing1)
+                .userId(testUserIssuing1.getId())
+                .username(testUserIssuing1.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO2 = UsernameDTO.builder()
-                .userId(testUserIdIssuing2)
-                .username(testUsernameIssuing2)
+                .userId(testUserIssuing2.getId())
+                .username(testUserIssuing2.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO3 = UsernameDTO.builder()
-                .userId(testUserIdIssuing3)
-                .username(testUsernameIssuing3)
+                .userId(testUserIssuing3.getId())
+                .username(testUserIssuing3.getName())
                 .build();
 
 
@@ -577,6 +584,37 @@ public class ConnectAPITest {
         // mock returns
         when(cosignService.getAllCosignsForUser(anyLong())).thenReturn(mockCosignsForUserDTOList);
 
+        // expected result
+        String template =
+                "[" +
+                        "{\"phraseId\":%d,\"listOfCosigners\":" +
+                        "[" +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}" +
+                        "]" +
+                        "}," +
+                        "{\"phraseId\":%d,\"listOfCosigners\":" +
+                        "[" +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}" +
+                        "]" +
+                        "}," +
+                        "{\"phraseId\":%d,\"listOfCosigners\":" +
+                        "[" +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}," +
+                        "{\"userId\":%d,\"username\":\"%s\"}" +
+                        "]" +
+                        "}]";
+        String expectedMessage = String.format(
+                template,
+                PHRASE1_ID, USER1_ID, USER1_NAME, USER2_ID, USER2_NAME, USER3_ID, USER3_NAME,
+                PHRASE2_ID, USER1_ID, USER1_NAME, USER2_ID, USER2_NAME, USER3_ID, USER3_NAME,
+                PHRASE3_ID, USER1_ID, USER1_NAME, USER2_ID, USER2_NAME, USER3_ID, USER3_NAME
+                );
+
         // test
         this.mockMvc
                 .perform(
@@ -584,28 +622,7 @@ public class ConnectAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().json(
-                        "[" +
-                                "{\"phraseId\":1,\"listOfCosigners\":" +
-                                    "[" +
-                                        "{\"userId\":1,\"username\":\"test1\"}," +
-                                        "{\"userId\":2,\"username\":\"test2\"}," +
-                                        "{\"userId\":3,\"username\":\"test3\"}" +
-                                    "]" +
-                                "}," +
-                                "{\"phraseId\":2,\"listOfCosigners\":" +
-                                    "[" +
-                                        "{\"userId\":1,\"username\":\"test1\"}," +
-                                        "{\"userId\":2,\"username\":\"test2\"}," +
-                                        "{\"userId\":3,\"username\":\"test3\"}" +
-                                    "]" +
-                                "}," +
-                                "{\"phraseId\":3,\"listOfCosigners\":" +
-                                    "[" +
-                                        "{\"userId\":1,\"username\":\"test1\"}," +
-                                        "{\"userId\":2,\"username\":\"test2\"}," +
-                                        "{\"userId\":3,\"username\":\"test3\"}" +
-                                    "]" +
-                                "}]"));
+                .andExpect(content().json(expectedMessage));
     }
 }
+

@@ -6,6 +6,7 @@ import com.savvato.tribeapp.dto.CosignsForUserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.Cosign;
+import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.repositories.CosignRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,9 +53,9 @@ public class CosignServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void saveCosign() {
-        Long userIdIssuing = 1L;
-        Long userIdReceiving = 2L;
-        Long phraseId = 1L;
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseId = PHRASE1_ID;
 
         Cosign mockCosign = new Cosign();
         mockCosign.setUserIdIssuing(userIdIssuing);
@@ -76,9 +77,9 @@ public class CosignServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void saveCosignAlreadyExisting() {
-        Long userIdIssuing = 1L;
-        Long userIdReceiving = 2L;
-        Long phraseId = 1L;
+        Long userIdIssuing = USER1_ID;
+        Long userIdReceiving = USER2_ID;
+        Long phraseId = PHRASE1_ID;
 
         Cosign mockCosign = new Cosign();
         mockCosign.setUserIdIssuing(userIdIssuing);
@@ -104,19 +105,18 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetCosignersForUser(){
         // test data
-        Long testUserIdIssuing = 1L;
-        String testUsernameIssuing = "test";
-        Long testUserIdReceiving = 2L;
-        Long testPhraseId = 1L;
+        User testUserIssuing = getUser1();
+        Long testUserIdReceiving = USER2_ID;
+        Long testPhraseId = PHRASE1_ID;
 
         // mock return data
         UsernameDTO mockUsernameDTO = UsernameDTO.builder()
-                .userId(testUserIdIssuing)
-                .username(testUsernameIssuing)
+                .userId(testUserIssuing.getId())
+                .username(testUserIssuing.getName())
                 .build();
 
         List<Long> mockCosignerIds = new ArrayList<>();
-        mockCosignerIds.add(testUserIdIssuing);
+        mockCosignerIds.add(testUserIssuing.getId());
 
         // mock returns
         when(cosignRepository.findCosignersByUserIdReceivingAndPhraseId(anyLong(),anyLong())).thenReturn(mockCosignerIds);
@@ -138,35 +138,32 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetCosignersForUserWithThreeCosigners(){
         // test data
-        Long testUserIdIssuing1 = 1L;
-        Long testUserIdIssuing2 = 2L;
-        Long testUserIdIssuing3 = 3L;
-        String testUsernameIssuing1 = "test1";
-        String testUsernameIssuing2 = "test2";
-        String testUsernameIssuing3 = "test3";
+        User testUserIssuing1 = getUser1();
+        User testUserIssuing2 = getUser2();
+        User testUserIssuing3 = getUser3();
         Long testUserIdReceiving = 4L;
-        Long testPhraseId = 1L;
+        Long testPhraseId = PHRASE1_ID;
 
         // mock return data
         UsernameDTO mockUsernameDTO1 = UsernameDTO.builder()
-                .userId(testUserIdIssuing1)
-                .username(testUsernameIssuing1)
+                .userId(testUserIssuing1.getId())
+                .username(testUserIssuing1.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO2 = UsernameDTO.builder()
-                .userId(testUserIdIssuing2)
-                .username(testUsernameIssuing2)
+                .userId(testUserIssuing2.getId())
+                .username(testUserIssuing2.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO3 = UsernameDTO.builder()
-                .userId(testUserIdIssuing3)
-                .username(testUsernameIssuing3)
+                .userId(testUserIssuing3.getId())
+                .username(testUserIssuing3.getName())
                 .build();
 
         List<Long> mockCosignerIds = new ArrayList<>();
-        mockCosignerIds.add(testUserIdIssuing1);
-        mockCosignerIds.add(testUserIdIssuing2);
-        mockCosignerIds.add(testUserIdIssuing3);
+        mockCosignerIds.add(testUserIssuing1.getId());
+        mockCosignerIds.add(testUserIssuing2.getId());
+        mockCosignerIds.add(testUserIssuing3.getId());
 
         // mock returns
         when(cosignRepository.findCosignersByUserIdReceivingAndPhraseId(anyLong(),anyLong())).thenReturn(mockCosignerIds);
@@ -190,14 +187,13 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetAllCosignsForUser() {
         // test data
-        Long testUserIdIssuing = 1L;
-        String testUsernameIssuing = "test";
-        Long testPhraseId = 1L;
-        Long testUserIdReceiving = 2L;
+        User testUserIssuing = getUser1();
+        Long testPhraseId = PHRASE1_ID;
+        Long testUserIdReceiving = USER2_ID;
 
         // mock return data
         Cosign mockCosign = new Cosign();
-        mockCosign.setUserIdIssuing(testUserIdIssuing);
+        mockCosign.setUserIdIssuing(testUserIssuing.getId());
         mockCosign.setUserIdReceiving(testUserIdReceiving);
         mockCosign.setPhraseId(testPhraseId);
 
@@ -205,8 +201,8 @@ public class CosignServiceImplTest extends AbstractTestConstants {
         mockAllCosignsByUserIdReceivingList.add(mockCosign);
 
         UsernameDTO mockUsernameDTO = UsernameDTO.builder()
-                .userId(testUserIdIssuing)
-                .username(testUsernameIssuing)
+                .userId(testUserIssuing.getId())
+                .username(testUserIssuing.getName())
                 .build();
 
         List<UsernameDTO> mockUsernameDTOSList = new ArrayList<>();
@@ -240,33 +236,41 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetAllCosignsForUserWithThreeCosignsForThreePhrases() {
         // test data
-        Long testUserIdIssuing1 = 1L;
-        Long testUserIdIssuing2 = 2L;
-        Long testUserIdIssuing3 = 3L;
-        String testUsernameIssuing1 = "test1";
-        String testUsernameIssuing2 = "test2";
-        String testUsernameIssuing3 = "test3";
-        Long testPhraseId1 = 1L;
-        Long testPhraseId2 = 2L;
-        Long testPhraseId3 = 3L;
+        User testUserIssuing1 = getUser1();
+        User testUserIssuing2 = getUser2();
+        User testUserIssuing3 = getUser3();
+        Long testPhraseId1 = PHRASE1_ID;
+        Long testPhraseId2 = PHRASE2_ID;
+        Long testPhraseId3 = PHRASE3_ID;
         Long testUserIdReceiving = 4L;
 
         // mock return data
-        List<Cosign> mockAllCosignsByUserIdReceivingList = listBuilderCosignForUser(3,3); // See helper method listBuilderCosignForUser below
+        Long[] phrases = {PHRASE1_ID,PHRASE2_ID,PHRASE3_ID};
+        User[] users = {testUserIssuing1, testUserIssuing2, testUserIssuing3};
+        List<Cosign> mockAllCosignsByUserIdReceivingList = new ArrayList<>();
+        for(Long phraseId : phrases) { // create 3 cosigns for each of 3 phrases (9 total)
+            for(User user : users) {
+                Cosign cosign = new Cosign();
+                cosign.setPhraseId(phraseId);
+                cosign.setUserIdIssuing(user.getId());
+                cosign.setUserIdReceiving(testUserIdReceiving);
+                mockAllCosignsByUserIdReceivingList.add(cosign);
+            }
+        }
 
         UsernameDTO mockUsernameDTO1 = UsernameDTO.builder()
-                .userId(testUserIdIssuing1)
-                .username(testUsernameIssuing1)
+                .userId(testUserIssuing1.getId())
+                .username(testUserIssuing2.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO2 = UsernameDTO.builder()
-                .userId(testUserIdIssuing2)
-                .username(testUsernameIssuing2)
+                .userId(testUserIssuing2.getId())
+                .username(testUserIssuing2.getName())
                 .build();
 
         UsernameDTO mockUsernameDTO3 = UsernameDTO.builder()
-                .userId(testUserIdIssuing3)
-                .username(testUsernameIssuing3)
+                .userId(testUserIssuing3.getId())
+                .username(testUserIssuing3.getName())
                 .build();
 
         List<UsernameDTO> mockUsernameDTOSList1 = new ArrayList<>();
@@ -312,29 +316,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
         // test
         List<CosignsForUserDTO> testCosignsForUserDTOs = cosignService.getAllCosignsForUser(testUserIdReceiving);
 
-        for(int i=0; i<testCosignsForUserDTOs.size(); i++) {
-            assertEquals(testCosignsForUserDTOs.get(i).phraseId,expectedCosignsForUserDTOSList.get(i).phraseId);
-            for(int j=0; j<testCosignsForUserDTOs.get(i).listOfCosigners.size(); j++){
-                assertEquals(testCosignsForUserDTOs.get(i).listOfCosigners.get(j).userId, expectedCosignsForUserDTOSList.get(j).listOfCosigners.get(j).userId);
-                assertEquals(testCosignsForUserDTOs.get(i).listOfCosigners.get(j).username,expectedCosignsForUserDTOSList.get(j).listOfCosigners.get(j).username);
-            }
-        }
-    }
-
-    // Helper method to build a list of cosigns for a user with the specified amount of phrases and the specified amount of cosigners per phrase.
-    private List<Cosign> listBuilderCosignForUser (int phraseCount, int userPerPhraseCount) {
-        List<Cosign> list = new ArrayList<>();
-        Long userIdReceiving = userPerPhraseCount + 1L;
-
-        for(int i=1; i<=phraseCount; i++) {
-            Cosign cosign = new Cosign();
-            cosign.setPhraseId((long)i);
-            for(int j=1; j<=userPerPhraseCount; j++)
-                cosign.setUserIdIssuing((long)j);
-            cosign.setUserIdReceiving(userIdReceiving);
-            list.add(cosign);
-        }
-        return list;
+        assertThat(expectedCosignsForUserDTOSList).usingRecursiveComparison().isEqualTo(testCosignsForUserDTOs);
     }
 
     @Test
@@ -353,7 +335,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testValidateCosignersWhenIssuingUserNotLoggedIn() {
-        Long loggedInUser = 3L;
+        Long loggedInUser = USER3_ID;
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER2_ID;
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder()
@@ -430,7 +412,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
 
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER2_ID;
-        Long phraseId = 1L;
+        Long phraseId = PHRASE1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
         expectedDTO.booleanMessage = false;
@@ -449,7 +431,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     public void testDeleteCosignExceptionThrownOnDelete() {
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER2_ID;
-        Long phraseID = 1L;
+        Long phraseID = PHRASE1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
         expectedDTO.booleanMessage = false;
@@ -469,7 +451,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     public void testDeleteCosignHappyPath() {
         Long userIdIssuing = USER1_ID;
         Long userIdReceiving = USER2_ID;
-        Long phraseID = 1L;
+        Long phraseID = PHRASE1_ID;
 
         GenericResponseDTO expectedDTO = GenericResponseDTO.builder().build();
         expectedDTO.booleanMessage = true;
