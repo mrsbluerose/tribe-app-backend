@@ -13,6 +13,9 @@ public class Constants {
 	public static final String NULL_VALUE_WORD = "nullvalue";
 	public static final Long NULL_VALUE_ID = 1L;
 
+	public static final String REQUESTING_USER = "requesting";
+	public static final String TO_BE_CONNECTED_WITH_USER = "to be connected with";
+
 	/////
 	// Testing Related
 	public static final String FAKE_USER_NAME1 = "admin";

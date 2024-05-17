@@ -1,8 +1,10 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
+import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.dto.UserRoleDTO;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
@@ -19,6 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -26,8 +32,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -409,6 +414,45 @@ public class UserServiceImplTest extends AbstractTestConstants {
         return userDTO;
     }
 
+    @Test
+    public void getUserNameDTOHappyPath(){
+        Long testId = 1L;
+
+        User user = new User();
+        user.setId(testId);
+        user.setName("Marge");
+
+        UsernameDTO expectedUsernameDTO = UsernameDTO.builder()
+                .userId(testId)
+                .username("Marge")
+                .build();
+
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+
+        UsernameDTO usernameDTO = userService.getUsernameDTO(testId);
+        assertEquals(usernameDTO.userId, expectedUsernameDTO.userId);
+        assertEquals(usernameDTO.username, expectedUsernameDTO.username);
+    }
+
+    @Test
+    public void testGetLoggedInUser() {
+        // test data
+        Long testId = getUser1().getId();
+
+        // mock data
+        UserPrincipal mockUserPrincipal = new UserPrincipal(getUser1());
+        Authentication mockAuthentication = new UsernamePasswordAuthenticationToken(mockUserPrincipal, null);
+        SecurityContext mockSecurityContext = mock(SecurityContext.class);
+
+        // mock returns
+        when(mockSecurityContext.getAuthentication()).thenReturn(mockAuthentication);
+        SecurityContextHolder.setContext(mockSecurityContext);
+
+        // test
+        Long userId = userService.getLoggedInUserId();
+        assertEquals(testId, userId);
+    }
+    
     private Set<UserRoleDTO> getUserRoleDTOSet(User user) {
         Set<UserRole> userRole = user.getRoles();
         Set<UserRoleDTO> rtn = new HashSet<>();

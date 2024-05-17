@@ -8,6 +8,6 @@ Let's see, what can I tell you about it..
 
 It is collaboratively produced by a bunch of people who are learning to become better developers by taking tasks,
 researching and completing them, just as they would in a real job. This is called the Mock Programming Job. You can find
-more about the DMPJ at our meetup page: https://www.meetup.com/denver-mock-programming-job-meetup/
+more about the MPJ at by sending a message in our Discord: https://discord.gg/2hk4aCTuJ8.
 
 info@savvato.com
