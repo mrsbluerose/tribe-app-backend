@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
   @Bean
-  public OpenAPI openApi(@Value("${DEV_SERVER}") String devServer) {
+  public OpenAPI openApi(@Value("${SWAGGER_DEV_SERVER}") String devServer) {
     return new OpenAPI()
         .components(new Components())
         .info(
