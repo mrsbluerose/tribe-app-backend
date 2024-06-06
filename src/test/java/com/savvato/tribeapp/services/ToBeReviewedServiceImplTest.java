@@ -1,7 +1,7 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.entities.ToBeReviewed;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
 import com.savvato.tribeapp.repositories.ToBeReviewedRepository;
@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
-public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
+public class ToBeReviewedServiceImplTest implements PhraseTestConstants {
 
     @TestConfiguration
     static class PhraseServiceTestContextConfiguration {
@@ -44,10 +44,10 @@ public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
         ToBeReviewed expectedToBeReviewed = new ToBeReviewed();
         expectedToBeReviewed.setId(1L);
         expectedToBeReviewed.setHasBeenGroomed(true);
-        expectedToBeReviewed.setAdverb("competitively");
-        expectedToBeReviewed.setVerb("programs");
-        expectedToBeReviewed.setPreposition("with");
-        expectedToBeReviewed.setNoun("Python");
+        expectedToBeReviewed.setAdverb(ADVERB1_WORD);
+        expectedToBeReviewed.setVerb(VERB1_WORD);
+        expectedToBeReviewed.setPreposition(PREPOSITION1_WORD);
+        expectedToBeReviewed.setNoun(NOUN1_WORD);
 
         ToBeReviewedDTO expectedToBeReviewedDTO = ToBeReviewedDTO.builder()
                 .id(expectedToBeReviewed.getId())
@@ -89,10 +89,10 @@ public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
         ToBeReviewed expectedToBeReviewed = new ToBeReviewed();
         expectedToBeReviewed.setId(1L);
         expectedToBeReviewed.setHasBeenGroomed(true);
-        expectedToBeReviewed.setAdverb("competitively");
-        expectedToBeReviewed.setVerb("programs");
-        expectedToBeReviewed.setPreposition("with");
-        expectedToBeReviewed.setNoun("Python");
+        expectedToBeReviewed.setAdverb(ADVERB1_WORD);
+        expectedToBeReviewed.setVerb(VERB1_WORD);
+        expectedToBeReviewed.setPreposition(PREPOSITION1_WORD);
+        expectedToBeReviewed.setNoun(NOUN1_WORD);
 
         ToBeReviewedDTO expectedToBeReviewedDTO = ToBeReviewedDTO.builder()
                 .id(expectedToBeReviewed.getId())
@@ -116,10 +116,10 @@ public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
 
         expectedToBeReviewed.setId(2L);
         expectedToBeReviewed.setHasBeenGroomed(true);
-        expectedToBeReviewed.setAdverb("uncompetitively");
-        expectedToBeReviewed.setVerb("codes");
-        expectedToBeReviewed.setPreposition("without");
-        expectedToBeReviewed.setNoun("Scala");
+        expectedToBeReviewed.setAdverb(ADVERB2_WORD);
+        expectedToBeReviewed.setVerb(VERB2_WORD);
+        expectedToBeReviewed.setPreposition(PREPOSITION2_WORD);
+        expectedToBeReviewed.setNoun(NOUN2_WORD);
 
         ToBeReviewedDTO expectedToBeReviewedDTO2 = ToBeReviewedDTO.builder()
                 .id(expectedToBeReviewed.getId())
@@ -142,16 +142,15 @@ public class ToBeReviewedServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testGetReviewPhraseWithoutPlaceholderNullvalueReturnsEmptyString() {
-        String testWord = "test";
         String testEmptyString = "";
 
         ToBeReviewed testTbr = new ToBeReviewed();
         testTbr.setId(1L);
         testTbr.setHasBeenGroomed(true);
         testTbr.setAdverb(Constants.NULL_VALUE_WORD);
-        testTbr.setVerb(testWord);
+        testTbr.setVerb(VERB1_WORD);
         testTbr.setPreposition(Constants.NULL_VALUE_WORD);
-        testTbr.setNoun(testWord);
+        testTbr.setNoun(NOUN1_WORD);
 
         Mockito.when(toBeReviewedRepository.findNextReviewEligible(anyLong())).thenReturn(Optional.of(testTbr));
 

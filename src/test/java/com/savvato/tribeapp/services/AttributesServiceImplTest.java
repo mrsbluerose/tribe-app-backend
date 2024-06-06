@@ -1,5 +1,7 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.AttributeDTO;
 import com.savvato.tribeapp.dto.PhraseDTO;
 import com.savvato.tribeapp.repositories.UserPhraseRepository;
@@ -23,7 +25,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class AttributesServiceImplTest {
+public class AttributesServiceImplTest implements UserTestConstants, PhraseTestConstants {
 
     @TestConfiguration
     static class AttributesServiceTestContextConfiguration {
@@ -42,15 +44,19 @@ public class AttributesServiceImplTest {
 
     @Test
     public void getAttributesByUserIdWhenAttributesExist() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Map<PhraseDTO, Integer> phraseInformation =
                 Map.of(
-                        PhraseDTO.builder().adverb("competitively").verb("plays").noun("chess").build(), 1,
                         PhraseDTO.builder()
-                                .adverb("enthusiastically")
-                                .verb("volunteers")
-                                .preposition("for")
-                                .noun("UNICEF")
+                                .adverb(ADVERB1_WORD)
+                                .verb(VERB1_WORD)
+                                .noun(NOUN1_WORD)
+                                .build(), 1,
+                        PhraseDTO.builder()
+                                .adverb(ADVERB2_WORD)
+                                .verb(VERB2_WORD)
+                                .preposition(PREPOSITION2_WORD)
+                                .noun(NOUN2_WORD)
                                 .build(), 2);
         List<AttributeDTO> attributes = phraseInformation
                 .entrySet()
@@ -72,7 +78,7 @@ public class AttributesServiceImplTest {
 
     @Test
     public void getAttributesByUserIdWhenAttributesDontExist() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Optional<List<AttributeDTO>> expected = Optional.of(new ArrayList<>());
         ArgumentCaptor<Long> userIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         when(phraseService.getPhraseInformationByUserId(anyLong()))

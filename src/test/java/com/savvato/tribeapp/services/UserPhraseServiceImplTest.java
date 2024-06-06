@@ -1,5 +1,7 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.repositories.UserPhraseRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserPhraseServiceImplTest {
+public class UserPhraseServiceImplTest implements UserTestConstants, PhraseTestConstants {
     @TestConfiguration
     static class UserPhraseServiceTestContextConfiguration {
         @Bean
@@ -36,8 +38,8 @@ public class UserPhraseServiceImplTest {
 
     @Test
     public void findPhraseIdsByUserId() {
-        Long userId = 1L;
-        List<Long> phraseIds = new ArrayList<>(List.of(1L, 2L, 3L));
+        Long userId = USER1_ID;
+        List<Long> phraseIds = new ArrayList<>(List.of(PHRASE1_ID, PHRASE2_ID, PHRASE3_ID));
         Optional<List<Long>> phraseIdsOpt = Optional.of(phraseIds);
         when(userPhraseRepository.findPhraseIdsByUserId(any())).thenReturn(phraseIdsOpt);
         ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);

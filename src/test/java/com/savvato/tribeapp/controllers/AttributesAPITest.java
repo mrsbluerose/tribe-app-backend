@@ -3,7 +3,8 @@ package com.savvato.tribeapp.controllers;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.AttributesRequest;
 import com.savvato.tribeapp.dto.AttributeDTO;
 import com.savvato.tribeapp.dto.PhraseDTO;
@@ -38,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AttributesAPIController.class)
-public class AttributesAPITest {
+public class AttributesAPITest implements UserTestConstants, PhraseTestConstants {
     private UserPrincipal userPrincipal;
     private User user;
     @Autowired
@@ -84,20 +85,7 @@ public class AttributesAPITest {
                         .apply(springSecurity())
                         .build();
 
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-
-        user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
+        user = UserTestConstants.getUser3();
     }
 
     @Test
@@ -105,13 +93,13 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         PhraseDTO phraseDTO =
                 PhraseDTO.builder()
-                        .verb("plays")
-                        .noun("chess")
-                        .adverb("competitively")
-                        .preposition("")
+                        .verb(VERB1_WORD)
+                        .noun(NOUN1_WORD)
+                        .adverb(ADVERB1_WORD)
+                        .preposition(PREPOSITION1_WORD)
                         .build();
         AttributeDTO attributeDTO = AttributeDTO.builder().phrase(phraseDTO).build();
         List<AttributeDTO> expectedAttributes = List.of(attributeDTO);
@@ -136,7 +124,7 @@ public class AttributesAPITest {
 
     @Test
     public void getAttributesForUserWhenNoAttributesFound() throws Exception {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
@@ -156,14 +144,14 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         AttributesRequest attributesRequest = new AttributesRequest();
         attributesRequest.userId = userId;
         attributesRequest.id = 1L;
-        attributesRequest.adverb = "competitively";
-        attributesRequest.verb = "plays";
-        attributesRequest.noun = "chess";
-        attributesRequest.preposition = "";
+        attributesRequest.adverb = ADVERB1_WORD;
+        attributesRequest.verb = VERB1_WORD;
+        attributesRequest.noun = NOUN1_WORD;
+        attributesRequest.preposition = PREPOSITION1_WORD;
         String notificationContent = "Your attribute has been approved!";
         when(phraseService.isPhraseValid(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(true);
@@ -184,6 +172,9 @@ public class AttributesAPITest {
         ArgumentCaptor<String> notificationTypeNameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> notificationContentCaptor = ArgumentCaptor.forClass(String.class);
 
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "true");
+
         this.mockMvc
                 .perform(
                         post("/api/attributes")
@@ -192,7 +183,7 @@ public class AttributesAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value("true"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
 
         verify(notificationService, times(1))
@@ -214,14 +205,14 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         AttributesRequest attributesRequest = new AttributesRequest();
         attributesRequest.userId = userId;
         attributesRequest.id = 1L;
-        attributesRequest.adverb = "competitively";
-        attributesRequest.verb = "plays";
-        attributesRequest.noun = "chess";
-        attributesRequest.preposition = "";
+        attributesRequest.adverb = ADVERB1_WORD;
+        attributesRequest.verb = VERB1_WORD;
+        attributesRequest.noun = NOUN1_WORD;
+        attributesRequest.preposition = PREPOSITION1_WORD;
 
         when(phraseService.isPhraseValid(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(true);
@@ -243,6 +234,10 @@ public class AttributesAPITest {
         ArgumentCaptor<String> notificationContentCaptor = ArgumentCaptor.forClass(String.class);
         String notificationContent =
                 "Your attribute was rejected. This attribute is unsuitable and cannot be applied to users.";
+
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "false");
+
         this.mockMvc
                 .perform(
                         post("/api/attributes")
@@ -251,7 +246,7 @@ public class AttributesAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value("false"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
 
         verify(notificationService, times(1))
@@ -273,14 +268,14 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         AttributesRequest attributesRequest = new AttributesRequest();
         attributesRequest.userId = userId;
         attributesRequest.id = 1L;
-        attributesRequest.adverb = "competitively";
-        attributesRequest.verb = "plays";
-        attributesRequest.noun = "chess";
-        attributesRequest.preposition = "";
+        attributesRequest.adverb = ADVERB1_WORD;
+        attributesRequest.verb = VERB1_WORD;
+        attributesRequest.noun = NOUN1_WORD;
+        attributesRequest.preposition = PREPOSITION1_WORD;
 
         when(phraseService.isPhraseValid(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(false);
@@ -299,6 +294,10 @@ public class AttributesAPITest {
         ArgumentCaptor<String> notificationContentCaptor = ArgumentCaptor.forClass(String.class);
         String notificationContent =
                 "Your attribute was rejected. This attribute is unsuitable and cannot be applied to users.";
+
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "false");
+
         this.mockMvc
                 .perform(
                         post("/api/attributes")
@@ -307,7 +306,7 @@ public class AttributesAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value("false"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
         verify(phraseService, never())
                 .applyPhraseToUser(anyLong(), anyString(), anyString(), anyString(), anyString());
@@ -354,15 +353,15 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         ToBeReviewedDTO toBeReviewedDTO =
                 ToBeReviewedDTO.builder()
                         .id(1L)
                         .hasBeenGroomed(true)
-                        .verb("plays")
-                        .noun("sports")
-                        .adverb("never")
-                        .preposition("")
+                        .verb(VERB1_WORD)
+                        .noun(NOUN1_WORD)
+                        .adverb(ADVERB1_WORD)
+                        .preposition(PREPOSITION1_WORD)
                         .build();
         List<ToBeReviewedDTO> expectedToBeReviewed = List.of(toBeReviewedDTO);
 
@@ -389,7 +388,7 @@ public class AttributesAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
 
         when(reviewSubmittingUserService.getUserPhrasesToBeReviewed(anyLong())).thenReturn(new ArrayList<>());
 
