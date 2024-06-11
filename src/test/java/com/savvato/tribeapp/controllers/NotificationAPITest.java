@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.NotificationRequest;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.NotificationDTO;
@@ -43,7 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(NotificationAPIController.class)
-public class NotificationAPITest {
+public class NotificationAPITest implements UserTestConstants {
     private UserPrincipal userPrincipal;
     private User user;
     @Autowired
@@ -80,20 +81,7 @@ public class NotificationAPITest {
                         .apply(springSecurity())
                         .build();
 
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-
-        user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
+        user = UserTestConstants.getUser3();
     }
 
     @Test
@@ -108,6 +96,9 @@ public class NotificationAPITest {
         when(GenericResponseService.createDTO(anyString()))
                 .thenReturn(GenericResponseDTO.builder().responseMessage("Notification is already read").build());
 
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "Notification is already read");
+
         MvcResult result = this.mockMvc
                 .perform(
                         put("/api/notifications")
@@ -116,7 +107,7 @@ public class NotificationAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value(("Notification is already read")))
+                .andExpect(content().json(expectedMessage))
                 .andReturn(); // Get the MvcResult
 
 
@@ -137,6 +128,9 @@ public class NotificationAPITest {
         when(GenericResponseService.createDTO(anyString()))
                 .thenReturn(GenericResponseDTO.builder().responseMessage("Notification read status updated").build());
 
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "Notification read status updated");
+
         MvcResult result = this.mockMvc
                 .perform(
                         put("/api/notifications")
@@ -145,7 +139,7 @@ public class NotificationAPITest {
                                 .header("Authorization", "Bearer " + auth)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value("Notification read status updated"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn(); // Get the MvcResult
 
         verify(notificationService, times(1))
@@ -169,12 +163,16 @@ public class NotificationAPITest {
         when(GenericResponseService.createDTO(anyString()))
                 .thenReturn(GenericResponseDTO.builder().responseMessage("Notification deleted").build());
 
+        String template = "{\"responseMessage\": \"%s\"}";
+        String expectedMessage = String.format(template, "Notification deleted");
+
         MvcResult result = this.mockMvc
                 .perform(delete("/api/notifications/{id}", notificationRequest.id)
                         .header("Authorization", "Bearer " + auth)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("responseMessage").value("Notification deleted")).andReturn(); // Get the MvcResult
+                .andExpect(content().json(expectedMessage))
+                .andReturn(); // Get the MvcResult
         verify(notificationService, times(1)).deleteNotification(notificationIdCaptor.capture());
         assertEquals(notificationIdCaptor.getValue(), notificationRequest.id);
     }
@@ -206,7 +204,7 @@ public class NotificationAPITest {
         when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = 1L;
+        Long userId = USER1_ID;
         NotificationDTO notificationDTO =
                 NotificationDTO.builder()
                         .id(userId)
