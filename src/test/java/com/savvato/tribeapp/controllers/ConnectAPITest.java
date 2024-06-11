@@ -3,7 +3,8 @@ package com.savvato.tribeapp.controllers;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ConnectRequest;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.controllers.dto.CosignRequest;
@@ -39,7 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ConnectAPIController.class)
-public class ConnectAPITest extends AbstractTestConstants {
+public class ConnectAPITest implements UserTestConstants, PhraseTestConstants {
     private User user;
     @Autowired
     private MockMvc mockMvc;
@@ -80,7 +81,7 @@ public class ConnectAPITest extends AbstractTestConstants {
                         .apply(springSecurity())
                         .build();
 
-        user = getUser3();
+        user = UserTestConstants.getUser3();
 
     }
 
@@ -341,7 +342,7 @@ public class ConnectAPITest extends AbstractTestConstants {
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
         Long toBeConnectedWithUserId = USER1_ID;
-        User requestingUser = getUser2();
+        User requestingUser = UserTestConstants.getUser2();
 
         ConnectOutgoingMessageDTO returnDTO = ConnectOutgoingMessageDTO
                 .builder()
@@ -482,7 +483,7 @@ public class ConnectAPITest extends AbstractTestConstants {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         // test data
-        User testUserIssuing = getUser1();
+        User testUserIssuing = UserTestConstants.getUser1();
         Long testUserIdReceiving = USER2_ID;
         Long testPhraseId = PHRASE1_ID;
 
@@ -519,12 +520,12 @@ public class ConnectAPITest extends AbstractTestConstants {
         String auth = AuthServiceImpl.generateAccessToken(user);
 
         // test data
-        User testUserIssuing1 = getUser1();
-        User testUserIssuing2 = getUser2();
-        User testUserIssuing3 = getUser3();
-        Long testPhraseId1 = 1L;
-        Long testPhraseId2 = 2L;
-        Long testPhraseId3 = 3L;
+        User testUserIssuing1 = UserTestConstants.getUser1();
+        User testUserIssuing2 = UserTestConstants.getUser2();
+        User testUserIssuing3 = UserTestConstants.getUser3();
+        Long testPhraseId1 = PHRASE1_ID;
+        Long testPhraseId2 = PHRASE2_ID;
+        Long testPhraseId3 = PHRASE3_ID;
         Long testUserIdReceiving = 4L;
 
         // mock return data
