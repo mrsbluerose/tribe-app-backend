@@ -1,7 +1,8 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ConnectionRemovalRequest;
 import com.savvato.tribeapp.dto.ConnectOutgoingMessageDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
-public class ConnectServiceImplTest extends AbstractTestConstants {
+public class ConnectServiceImplTest implements UserTestConstants {
     @TestConfiguration
     static class ConnectServiceImplTestContextConfiguration {
         @Bean
@@ -277,7 +278,7 @@ public class ConnectServiceImplTest extends AbstractTestConstants {
         // mock returns
         when(connectionsRepository.findAllByToBeConnectedWithUserId(anyLong())).thenReturn(List.of(whenUser1AsToBeConnectedWith));
         when(connectionsRepository.findAllByRequestingUserId(anyLong())).thenReturn(List.of(whenUser1AsRequesting));
-        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(getUser2())).thenReturn(Optional.of(getUser2()));
+        Mockito.when(userRepository.findById(Mockito.any())).thenReturn(Optional.of(UserTestConstants.getUser2())).thenReturn(Optional.of(UserTestConstants.getUser2()));
 
         // test
         List<ConnectOutgoingMessageDTO> actualMessageDTOs = connectService.getAllConnectionsForAUser(user1);

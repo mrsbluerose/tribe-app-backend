@@ -1,7 +1,8 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.PhraseDTO;
 import com.savvato.tribeapp.dto.projections.PhraseWithUserCountDTO;
 import com.savvato.tribeapp.entities.*;
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith({SpringExtension.class})
-public class PhraseServiceImplTest extends AbstractTestConstants {
+public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConstants {
 
     @TestConfiguration
     static class PhraseServiceTestContextConfiguration {
@@ -83,20 +84,16 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void isPhraseValidHappyPath() {
-        String adverb = "competitively";
-        String verb = "plays";
-        String noun = "chess";
-        String preposition = "";
         when(rejectedPhraseRepository.findByRejectedPhrase(anyString())).thenReturn(Optional.empty());
         when(rejectedNonEnglishWordRepository.findByWord(anyString())).thenReturn(Optional.empty());
-        boolean rtn = phraseService.isPhraseValid(adverb, verb, preposition, noun);
+        boolean rtn = phraseService.isPhraseValid(ADVERB1_WORD, VERB1_WORD, PREPOSITION1_WORD, NOUN1_WORD);
         ArgumentCaptor<String> wordCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> phraseCaptor = ArgumentCaptor.forClass(String.class);
 
         verify(rejectedNonEnglishWordRepository, times(4)).findByWord(wordCaptor.capture());
         verify(rejectedPhraseRepository, times(1)).findByRejectedPhrase(phraseCaptor.capture());
-        assertThat(wordCaptor.getAllValues()).contains(adverb, verb, noun, preposition);
-        assertThat(phraseCaptor.getValue()).contains(adverb, verb, noun, preposition);
+        assertThat(wordCaptor.getAllValues()).contains(ADVERB1_WORD.toLowerCase(), VERB1_WORD.toLowerCase(), PREPOSITION1_WORD.toLowerCase(), NOUN1_WORD.toLowerCase()); // all words converted to lower case in isPhraseValid
+        assertThat(phraseCaptor.getValue()).contains(ADVERB1_WORD.toLowerCase(), VERB1_WORD.toLowerCase(), PREPOSITION1_WORD.toLowerCase(), NOUN1_WORD.toLowerCase()); // all words converted to lower case in isPhraseValid
         assertTrue(rtn);
     }
 
@@ -105,8 +102,8 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
     @ValueSource(strings = {"          "})
     public void isPhraseValidWhenAdverbOrPrepositionMissing(String value) {
         String adverb = value;
-        String verb = "plays";
-        String noun = "chess";
+        String verb = VERB1_WORD;
+        String noun = NOUN1_WORD;
         String preposition = value;
         when(rejectedPhraseRepository.findByRejectedPhrase(anyString())).thenReturn(Optional.empty());
         when(rejectedNonEnglishWordRepository.findByWord(anyString())).thenReturn(Optional.empty());
@@ -116,8 +113,8 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
         verify(rejectedNonEnglishWordRepository, times(4)).findByWord(wordCaptor.capture());
         verify(rejectedPhraseRepository, times(1)).findByRejectedPhrase(phraseCaptor.capture());
-        assertThat(wordCaptor.getAllValues()).contains(adverb, verb, noun, preposition);
-        assertThat(phraseCaptor.getValue()).contains(noun, verb);
+        assertThat(wordCaptor.getAllValues()).contains(adverb, verb.toLowerCase(), noun.toLowerCase(), preposition); // all words converted to lower case in isPhraseValid
+        assertThat(phraseCaptor.getValue()).contains(noun.toLowerCase(), verb.toLowerCase()); // all words converted to lower case in isPhraseValid
         assertTrue(rtn);
     }
 
@@ -125,9 +122,9 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
     @NullAndEmptySource
     @ValueSource(strings = {"          "})
     public void testIsMissingVerbOrNounWhenVerbMissing(String verb) {
-        String adverb = "competitively";
-        String noun = "chess";
-        String preposition = "";
+        String adverb = ADVERB1_WORD;
+        String noun = NOUN1_WORD;
+        String preposition = PREPOSITION1_WORD;
 
         assertThrows(IllegalArgumentException.class, () -> {
             phraseService.isPhraseValid(adverb, verb, preposition, noun);
@@ -179,14 +176,14 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
     @Test
     public void testApplyPhraseToUserWhenPhraseHasBeenPreviouslyApproved() {
 
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
 
-        Adverb testAdverb = getTestAdverb1();
-        Verb testVerb = getTestVerb1();
-        Preposition testPreposition = getTestPreposition1();
-        Noun testNoun = getTestNoun1();
+        Adverb testAdverb = PhraseTestConstants.getTestAdverb1();
+        Verb testVerb = PhraseTestConstants.getTestVerb1();
+        Preposition testPreposition = PhraseTestConstants.getTestPreposition1();
+        Noun testNoun = PhraseTestConstants.getTestNoun1();
 
-        Phrase testPhrase = getTestPhrase1();
+        Phrase testPhrase = PhraseTestConstants.getTestPhrase1();
 
         UserPhrase userPhrase = new UserPhrase();
         userPhrase.setUserId(user1.getId());
@@ -213,7 +210,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
     // phrase exists in to_be_reviewed
     @Test
     public void testApplyPhraseToUserWhenPhraseExistsInToBeReviewed() {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
 
         String testWord = "test";
         ToBeReviewed toBeReviewed = new ToBeReviewed();
@@ -244,7 +241,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
     // phrase does not exist in to_be_reviewed
     @Test
     public void testApplyPhraseToUserWhenPhraseDoesNotExistInToBeReviewed() {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
 
         String testWord = "test";
         ToBeReviewed toBeReviewed = new ToBeReviewed();
@@ -272,7 +269,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void getPhraseInformationByUserId() {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         String testWord = "test";
         String testEmptyString = "";
         List<Long> userIds = new ArrayList<>(List.of(1L));
@@ -300,7 +297,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void getPhraseInformationByUserIdWhenNoMatchingPhraseFound() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Optional<List<Long>> phraseIds = Optional.of(List.of(1L, 2L));
         when(userPhraseService.findPhraseIdsByUserId(userId)).thenReturn(phraseIds);
         when(phraseRepository.findPhraseByPhraseId(anyLong())).thenReturn(Optional.empty());
@@ -311,7 +308,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void getPhraseInformationByUserIdWhenNoPhraseIdsFound() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         when(userPhraseService.findPhraseIdsByUserId(userId)).thenReturn(Optional.empty());
         Optional<Map<PhraseDTO, Integer>> expected = Optional.empty();
 
@@ -326,12 +323,12 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testApplyPhraseToUserWhenAdverbIsBlank() {
-        User user1 = getUser1();
-        String testAdverb = "";
+        User user1 = UserTestConstants.getUser1();
+        String testAdverbEmpty = "";
         String testAdverbConverted = "nullvalue";
-        String testVerb = getTestVerb1().getWord();
-        String testPreposition = getTestPreposition1().getWord();
-        String testNoun = getTestNoun1().getWord();
+        String testVerb = PhraseTestConstants.getTestVerb1().getWord();
+        String testPreposition = PhraseTestConstants.getTestPreposition1().getWord();
+        String testNoun = PhraseTestConstants.getTestNoun1().getWord();
 
         ToBeReviewed tbrSaved = new ToBeReviewed();
         tbrSaved.setId(1L);
@@ -343,7 +340,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
         // Should return false if the phrase has not been seen before
         Mockito.when(toBeReviewedRepository.save(any())).thenReturn(tbrSaved);
-        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverb, testVerb, testPreposition, testNoun);
+        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverbEmpty, testVerb, testPreposition, testNoun);
         assertFalse(applyPhraseToUser);
 
         // Empty Adverb should be converted to "nullvalue"
@@ -357,12 +354,12 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testApplyPhraseToUserWhenPrepositionIsBlank() {
-        User user1 = getUser1();
-        String testAdverb = getTestAdverb1().getWord();
-        String testVerb = getTestVerb1().getWord();
-        String testPreposition = "";
+        User user1 = UserTestConstants.getUser1();
+        String testAdverb = PhraseTestConstants.getTestAdverb1().getWord();
+        String testVerb = PhraseTestConstants.getTestVerb1().getWord();
+        String testPrepositionBlank = "";
         String testPrepositionConverted = "nullvalue";
-        String testNoun = getTestNoun1().getWord();
+        String testNoun = PhraseTestConstants.getTestNoun1().getWord();
 
         ToBeReviewed tbrSaved = new ToBeReviewed();
         tbrSaved.setId(1L);
@@ -376,7 +373,7 @@ public class PhraseServiceImplTest extends AbstractTestConstants {
         Mockito.when(toBeReviewedRepository.save(any())).thenReturn(tbrSaved);
         when(nounRepository.findByWord(anyString())).thenReturn(Optional.of(new Noun(testNoun)));
         when(verbRepository.findByWord(anyString())).thenReturn(Optional.of(new Verb(testVerb)));
-        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverb, testVerb, testPreposition, testNoun);
+        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverb, testVerb, testPrepositionBlank, testNoun);
         assertFalse(applyPhraseToUser);
 
         // Empty Preposition should be converted to "nullvalue"

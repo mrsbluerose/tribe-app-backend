@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ReviewDecisionRequest;
 import com.savvato.tribeapp.entities.ReviewDecision;
 import com.savvato.tribeapp.entities.ReviewDecisionReason;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 
-public class ReviewDecisionServiceImplTest {
+public class ReviewDecisionServiceImplTest implements UserTestConstants {
     @TestConfiguration
     static class ReviewDecisionServiceTestContextConfiguration {
         @Bean
@@ -45,7 +46,7 @@ public class ReviewDecisionServiceImplTest {
 
     @Test
     public void saveReviewDecision() {
-        ReviewDecision decision = new ReviewDecision(1L, 1L, 1L);
+        ReviewDecision decision = new ReviewDecision(1L, USER1_ID, 1L);
         Mockito.when(reviewDecisionRepository.save(Mockito.any())).thenReturn(decision);
         ReviewDecision saveResult = reviewDecisionService.saveReviewDecision(decision.getReviewId(), decision.getUserId(), decision.getReasonId());
 

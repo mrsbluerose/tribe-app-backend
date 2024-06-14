@@ -1,5 +1,5 @@
 package com.savvato.tribeapp.services;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
 import com.savvato.tribeapp.entities.*;
 import com.savvato.tribeapp.repositories.*;
@@ -21,8 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
-public class ReviewSubmittingUserServiceImplTest extends
-        AbstractTestConstants {
+public class ReviewSubmittingUserServiceImplTest implements PhraseTestConstants {
 
     @TestConfiguration
     static class ReviewSubmittingUserServiceTestContextConfiguration {
@@ -49,24 +48,24 @@ public class ReviewSubmittingUserServiceImplTest extends
         Mockito.when(reviewSubmittingUserRepository.findToBeReviewedIdByUserId(anyLong
                 ())).thenReturn(toBeReviewedIds);
 
-        String testWord1 = "test";
-        String testWord2 = "test2";
+        //String testWord1 = "test";
+        //String testWord2 = "test2";
         ToBeReviewed tbr1 = new ToBeReviewed();
 
         tbr1.setId(1L);
         tbr1.setHasBeenGroomed(true);
-        tbr1.setAdverb(testWord1);
-        tbr1.setVerb(testWord1);
-        tbr1.setPreposition(testWord1);
-        tbr1.setNoun(testWord1);
+        tbr1.setAdverb(ADVERB1_WORD);
+        tbr1.setVerb(VERB1_WORD);
+        tbr1.setPreposition(PREPOSITION1_WORD);
+        tbr1.setNoun(NOUN1_WORD);
 
         ToBeReviewed tbr2 = new ToBeReviewed();
         tbr1.setId(2L);
         tbr1.setHasBeenGroomed(true);
-        tbr1.setAdverb(testWord2);
-        tbr1.setVerb(testWord2);
-        tbr1.setPreposition(testWord2);
-        tbr1.setNoun(testWord2);
+        tbr1.setAdverb(ADVERB2_WORD);
+        tbr1.setVerb(VERB2_WORD);
+        tbr1.setPreposition(PREPOSITION2_WORD);
+        tbr1.setNoun(NOUN2_WORD);
 
         Mockito.when(toBeReviewedRepository.findById(anyLong()))
                 .thenReturn(Optional.of(tbr1))

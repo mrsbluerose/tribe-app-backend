@@ -1,6 +1,7 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.PhraseTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.CosignDTO;
 import com.savvato.tribeapp.dto.CosignsForUserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
@@ -27,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
-public class CosignServiceImplTest extends AbstractTestConstants {
+public class CosignServiceImplTest implements UserTestConstants, PhraseTestConstants {
 
     @TestConfiguration
     static class CosignServiceImplTestContextConfiguration {
@@ -105,7 +106,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetCosignersForUser(){
         // test data
-        User testUserIssuing = getUser1();
+        User testUserIssuing = UserTestConstants.getUser1();
         Long testUserIdReceiving = USER2_ID;
         Long testPhraseId = PHRASE1_ID;
 
@@ -138,9 +139,9 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetCosignersForUserWithThreeCosigners(){
         // test data
-        User testUserIssuing1 = getUser1();
-        User testUserIssuing2 = getUser2();
-        User testUserIssuing3 = getUser3();
+        User testUserIssuing1 = UserTestConstants.getUser1();
+        User testUserIssuing2 = UserTestConstants.getUser2();
+        User testUserIssuing3 = UserTestConstants.getUser3();
         Long testUserIdReceiving = 4L;
         Long testPhraseId = PHRASE1_ID;
 
@@ -187,7 +188,7 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetAllCosignsForUser() {
         // test data
-        User testUserIssuing = getUser1();
+        User testUserIssuing = UserTestConstants.getUser1();
         Long testPhraseId = PHRASE1_ID;
         Long testUserIdReceiving = USER2_ID;
 
@@ -236,9 +237,9 @@ public class CosignServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetAllCosignsForUserWithThreeCosignsForThreePhrases() {
         // test data
-        User testUserIssuing1 = getUser1();
-        User testUserIssuing2 = getUser2();
-        User testUserIssuing3 = getUser3();
+        User testUserIssuing1 = UserTestConstants.getUser1();
+        User testUserIssuing2 = UserTestConstants.getUser2();
+        User testUserIssuing3 = UserTestConstants.getUser3();
         Long testPhraseId1 = PHRASE1_ID;
         Long testPhraseId2 = PHRASE2_ID;
         Long testPhraseId3 = PHRASE3_ID;

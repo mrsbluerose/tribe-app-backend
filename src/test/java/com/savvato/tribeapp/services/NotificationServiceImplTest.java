@@ -1,5 +1,6 @@
 package com.savvato.tribeapp.services;
 
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.NotificationDTO;
 import com.savvato.tribeapp.entities.Notification;
 import com.savvato.tribeapp.entities.NotificationType;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith({SpringExtension.class})
-public class NotificationServiceImplTest {
+public class NotificationServiceImplTest implements UserTestConstants {
 
     @TestConfiguration
     static class NotificationServiceTestContextConfiguration {
@@ -59,7 +60,7 @@ public class NotificationServiceImplTest {
 
     @Test
     public void getUserNotifications() {
-        Long userId = 1L;
+        Long userId = USER1_ID;
         String iconUrl = "Test url";
         String formattedLastUpdatedDate = Instant.now().toString();
         NotificationDTO notificationDTO = NotificationDTO
@@ -117,7 +118,7 @@ public class NotificationServiceImplTest {
         Notification mockNotification = new Notification();
         mockNotification.setId(1L);
         mockNotification.setType(mockType);
-        mockNotification.setUserId(1L);
+        mockNotification.setUserId(USER1_ID);
         mockNotification.setDescription("Test Description");
         mockNotification.setBody("Test Body");
         mockNotification.setRead(false);
@@ -132,7 +133,7 @@ public class NotificationServiceImplTest {
         NotificationType type = new NotificationType();
         type.setId(1L);
 
-        Long userId = 1L;
+        Long userId = USER1_ID;
         String description = "Test Description";
         String body = "Test Body";
 
@@ -165,7 +166,7 @@ public class NotificationServiceImplTest {
         NotificationType type = new NotificationType();
         type.setId(1L);
 
-        Long userId = 1L;
+        Long userId = USER1_ID;
         String description = "Test Description";
         String body = "Test Body";
 
@@ -259,7 +260,7 @@ public class NotificationServiceImplTest {
     @Test
     public void testGetNotificationsByUserId() {
         // Mock data
-        Long userId = 1L;
+        Long userId = USER1_ID;
         Notification notification1 = new Notification();
         notification1.setId(1L);
         notification1.setUserId(userId);

@@ -1,7 +1,7 @@
 package com.savvato.tribeapp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ReviewDecisionRequest;
 import com.savvato.tribeapp.dto.ProfileDTO;
 import com.savvato.tribeapp.entities.ReviewDecision;
@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewDecisionAPIController.class)
-public class ReviewDecisionAPITest {
+public class ReviewDecisionAPITest implements UserTestConstants {
     @Autowired
     private MockMvc mockMvc;
 
@@ -62,21 +62,7 @@ public class ReviewDecisionAPITest {
 
     @Test
     public void testReviewDecisionHappyPath() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-
-        User user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
-
+        User user = UserTestConstants.getUser3();
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(
                 new UserPrincipal(user)
         );
