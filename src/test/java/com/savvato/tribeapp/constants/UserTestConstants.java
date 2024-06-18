@@ -41,7 +41,7 @@ public interface UserTestConstants {
         return rtn;
     }
 
-    static Set<UserRole> getUserRoles_Admin() {
+    static Set<UserRole> getUserRoles_Admin_AccountHolder() {
         Set<UserRole> rtn = new HashSet<>();
 
         rtn.add(UserRole.ROLE_ADMIN);
@@ -50,7 +50,7 @@ public interface UserTestConstants {
         return rtn;
     }
 
-    static Set<UserRole> getUserRoles_Admin_AccountHolder() {
+    static Set<UserRole> getUserRoles_Admin_AccountHolder_PhraseReviewer() {
         Set<UserRole> rtn = new HashSet<>();
 
         rtn.add(UserRole.ROLE_ADMIN);
@@ -71,7 +71,7 @@ public interface UserTestConstants {
         rtn.setEnabled(USER_IS_ENABLED);
         rtn.setCreated();
         rtn.setLastUpdated();
-        rtn.setRoles(getUserRoles_Admin());
+        rtn.setRoles(getUserRoles_Admin_AccountHolder());
 
         return rtn;
     }
@@ -87,7 +87,7 @@ public interface UserTestConstants {
         rtn.setEnabled(USER_IS_ENABLED);
         rtn.setCreated();
         rtn.setLastUpdated();
-        rtn.setRoles(getUserRoles_Admin());
+        rtn.setRoles(getUserRoles_Admin_AccountHolder());
 
         return rtn;
     }
@@ -103,7 +103,7 @@ public interface UserTestConstants {
         rtn.setEnabled(USER_IS_ENABLED);
         rtn.setCreated();
         rtn.setLastUpdated();
-        rtn.setRoles(getUserRoles_Admin_AccountHolder());
+        rtn.setRoles(getUserRoles_Admin_AccountHolder_PhraseReviewer());
 
         return rtn;
     }

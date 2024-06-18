@@ -2,7 +2,8 @@ package com.savvato.tribeapp.controllers;
 
 import com.google.gson.Gson;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+//import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.SMSChallengeRequest;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
@@ -37,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SMSChallengeCodeAPIController.class)
-public class SMSChallengeCodeAPITest {
+public class SMSChallengeCodeAPITest implements UserTestConstants {
     private User user;
     @Autowired
     private MockMvc mockMvc;
@@ -73,24 +74,12 @@ public class SMSChallengeCodeAPITest {
                         .apply(springSecurity())
                         .build();
 
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
+        user = UserTestConstants.getUser3();
 
-        user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {Constants.FAKE_USER_PHONE2, "0123456789"})
+    @ValueSource(strings = {UserTestConstants.USER2_PHONE, "0123456789"})
     public void sendSMSChallengeCode(String phoneNumber) throws Exception {
         SMSChallengeRequest smsChallengeRequest = new SMSChallengeRequest();
         smsChallengeRequest.code = "ABCDEF";
@@ -117,7 +106,7 @@ public class SMSChallengeCodeAPITest {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        String phoneNumber = Constants.FAKE_USER_PHONE2;
+        String phoneNumber = UserTestConstants.USER2_PHONE;
         String expectedPhoneNumber = "1" + phoneNumber;
 
         this.mockMvc
@@ -163,7 +152,7 @@ public class SMSChallengeCodeAPITest {
         return Stream.of(
                 Arguments.of(null, "ABCDEF"),
                 Arguments.of("null", "ABCDEF"),
-                Arguments.of(Constants.FAKE_USER_PHONE2, null),
+                Arguments.of(UserTestConstants.USER2_PHONE, null),
                 Arguments.of(null, "null")
         );
     }

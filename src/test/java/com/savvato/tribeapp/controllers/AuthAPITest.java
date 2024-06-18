@@ -3,10 +3,9 @@ package com.savvato.tribeapp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.AuthRequest;
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.services.AuthService;
 import com.savvato.tribeapp.services.UserDetailsServiceTRIBEAPP;
 import com.savvato.tribeapp.services.UserPrincipalService;
@@ -24,9 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -36,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthAPIController.class)
 
-public class AuthAPITest {
+public class AuthAPITest implements UserTestConstants {
 
     @Autowired
     private MockMvc mockMvc;
@@ -65,19 +61,9 @@ public class AuthAPITest {
 
     @Test
     public void loginHappyPath() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-        User expectedUser = new User();
-        expectedUser.setId(1L);
-        expectedUser.setName(Constants.FAKE_USER_NAME1);
-        expectedUser.setPassword("phrase_reviewer"); // pw => admin
-        expectedUser.setEnabled(1);
-        expectedUser.setRoles(rolesSet);
-        expectedUser.setCreated();
-        expectedUser.setLastUpdated();
-        expectedUser.setEmail(Constants.FAKE_USER_EMAIL1);
+
+        User expectedUser = UserTestConstants.getUser3();
+
         AuthRequest authRequest = new AuthRequest();
         authRequest.email = expectedUser.getEmail();
         authRequest.password = expectedUser.getPassword();
@@ -110,19 +96,9 @@ public class AuthAPITest {
 
     @Test
     public void loginWhenBadCredentialsErrorThrown() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-        User expectedUser = new User();
-        expectedUser.setId(1L);
-        expectedUser.setName(Constants.FAKE_USER_NAME1);
-        expectedUser.setPassword("phrase_reviewer"); // pw => admin
-        expectedUser.setEnabled(1);
-        expectedUser.setRoles(rolesSet);
-        expectedUser.setCreated();
-        expectedUser.setLastUpdated();
-        expectedUser.setEmail(Constants.FAKE_USER_EMAIL1);
+
+        User expectedUser = UserTestConstants.getUser3();
+
         AuthRequest authRequest = new AuthRequest();
         authRequest.email = expectedUser.getEmail();
         authRequest.password = expectedUser.getPassword();
