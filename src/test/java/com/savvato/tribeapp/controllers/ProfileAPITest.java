@@ -2,14 +2,14 @@ package com.savvato.tribeapp.controllers;
 
 import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.ProfileDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.services.*;
-import org.aspectj.lang.annotation.Before;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProfileAPIController.class)
 @Import(SecurityConfig.class)
-public class ProfileAPITest {
+public class ProfileAPITest implements UserTestConstants {
+
+    private UserPrincipal userPrincipal;
+    private User user;
 
     @Autowired
     private MockMvc mockMvc;
@@ -63,45 +66,33 @@ public class ProfileAPITest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @Before("")
+    @BeforeEach
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(this.webApplicationContext)
                 .apply(springSecurity())
                 .build();
+
+        user = UserTestConstants.getUser3();
+
     }
 
     @Test
     public void testProfileHappyPath() throws Exception {
 
-        // TODO: Move these constants to their own classes, and reference them here.
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-
-        User user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("admin"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
-
-        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(
-                new UserPrincipal(user)
-        );
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
 
         Mockito.when(profileService.getByUserId(Mockito.anyLong())).thenReturn(
                 Optional.of(ProfileDTO.builder()
-                        .name(Constants.FAKE_USER_NAME1)
-                        .email(Constants.FAKE_USER_EMAIL1)
-                        .phone(Constants.FAKE_USER_PHONE1)
+                        .name(USER1_NAME)
+                        .email(USER2_EMAIL)
+                        .phone(USER1_PHONE)
                         .build())
         );
 
-        String auth = AuthServiceImpl.generateAccessToken(user);
+        String template = "{\"name\": \"%s\"}";
+        String expectedMessage = String.format(template, USER1_NAME);
 
         this.mockMvc.
                 perform(
@@ -109,32 +100,16 @@ public class ProfileAPITest {
                     .header("Authorization", "Bearer " + auth)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(Constants.FAKE_USER_NAME1));
+                .andExpect(content().json(expectedMessage));
 
               
                 
     }
      @Test
     public void testProfileHappyPathUpdate() throws Exception {
-        
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        
-        User user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("admin"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
-        
-        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(
-                new UserPrincipal(user)
-        );
-        
+
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(new UserPrincipal(user));
+         String auth = AuthServiceImpl.generateAccessToken(user);
 
         Mockito.when(profileService.update(Mockito.anyLong(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
         .thenReturn(true);
@@ -145,7 +120,8 @@ public class ProfileAPITest {
                          .booleanMessage(true)
                          .build());
 
-        String auth = AuthServiceImpl.generateAccessToken(user);
+         String template = "{\"booleanMessage\": %b}";
+         String expectedMessage = String.format(template, true);
 
         this.mockMvc.
         perform(
@@ -157,31 +133,15 @@ public class ProfileAPITest {
         )
         
         .andExpect(status().isOk())
-        .andExpect(jsonPath("booleanMessage").value(true));
+        .andExpect(content().json(expectedMessage));
 
-} 
+    }
 
-@Test
-public void testProfileUnHappyPathUpdate() throws Exception {
-    
-    Set<UserRole> rolesSet = new HashSet<>();
-    rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-    rolesSet.add(UserRole.ROLE_ADMIN);
-    
-    User user = new User();
-    user.setId(1L);
-    user.setName(Constants.FAKE_USER_NAME1);
-    user.setPassword("admin"); // pw => admin
-    user.setEnabled(1);
-    user.setRoles(rolesSet);
-    user.setCreated();
-    user.setLastUpdated();
-    user.setEmail(Constants.FAKE_USER_EMAIL1);
-    
-    Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(
-            new UserPrincipal(user)
-    );
-    
+    @Test
+    public void testProfileUnHappyPathUpdate() throws Exception {
+
+    Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
 
     Mockito.when(profileService.update(Mockito.anyLong(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
     .thenReturn(false);
@@ -192,7 +152,8 @@ public void testProfileUnHappyPathUpdate() throws Exception {
                     .booleanMessage(false)
                     .build());
 
-    String auth = AuthServiceImpl.generateAccessToken(user);
+    String template = "{\"booleanMessage\": %b}";
+    String expectedMessage = String.format(template, false);
 
     this.mockMvc.
     perform(
@@ -204,8 +165,8 @@ public void testProfileUnHappyPathUpdate() throws Exception {
     )
     
     .andExpect(status().isBadRequest())
-    .andExpect(jsonPath("booleanMessage").value(false));
+    .andExpect(content().json(expectedMessage));
 
-} 
+    }
 
 }

@@ -1,7 +1,7 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserPrincipalServiceImplTest extends AbstractTestConstants {
+public class UserPrincipalServiceImplTest implements UserTestConstants {
     @TestConfiguration
     static class UserPrincipalServiceTestContextConfiguration {
         @Bean
@@ -39,7 +39,7 @@ public class UserPrincipalServiceImplTest extends AbstractTestConstants {
     @Test
     public void getUserPrincipalByNameWhenUserExists() {
         String name = USER1_NAME;
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserPrincipal expected = new UserPrincipal(user);
         when(userRepository.findByName(anyString())).thenReturn(Optional.of(user));
         ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
@@ -63,7 +63,7 @@ public class UserPrincipalServiceImplTest extends AbstractTestConstants {
     @Test
     public void getUserPrincipalByEmailWhenUserExists() {
         String email = USER1_EMAIL;
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserPrincipal expected = new UserPrincipal(user);
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);

@@ -1,6 +1,6 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
+public class SMSChallengeCodeServiceImplTest implements UserTestConstants {
     @TestConfiguration
     static class SMSChallengeCodeServiceTestContextConfiguration {
         @Bean
@@ -37,7 +37,7 @@ public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
     @Test
     public void sendSMSChallengeCodeToPhoneNumberHappyPath() {
         String code = "123456";
-        String phoneNumber = "1234567890";
+        String phoneNumber = USER1_PHONE;
         String cacheKey = "SMSChallengeCodesByPhoneNumber";
         SMSChallengeCodeService spy = spy(smsChallengeCodeService);
         when(smss.sendSMS(anyString(), anyString())).thenReturn(true);
@@ -55,7 +55,7 @@ public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void sendSMSChallengeCodeToPhoneNumberWhenChallengeCodeIsntSent() {
-        String phoneNumber = "1234567890";
+        String phoneNumber = USER1_PHONE;
         String errorMessage = "error sending sms challenge to " + phoneNumber;
         SMSChallengeCodeService spy = spy(smsChallengeCodeService);
         when(smss.sendSMS(anyString(), anyString())).thenReturn(false);
@@ -67,7 +67,7 @@ public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void isAValidSMSChallengeCodeWhenCodeValid() {
-        String phoneNumber = "1234567890";
+        String phoneNumber = USER1_PHONE;
         String sentCode = "123456";
         when(cacheService.get(any(), any())).thenReturn(sentCode);
         ArgumentCaptor<String> phoneNumberCaptor = ArgumentCaptor.forClass(String.class);
@@ -79,7 +79,7 @@ public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void isAValidSMSChallengeCodeWhenCodeNotInCache() {
-        String phoneNumber = "1234567890";
+        String phoneNumber = USER1_PHONE;
         String sentCode = "123456";
         when(cacheService.get(any(), any())).thenReturn(null);
         ArgumentCaptor<String> phoneNumberCaptor = ArgumentCaptor.forClass(String.class);
@@ -91,7 +91,7 @@ public class SMSChallengeCodeServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void isAValidSMSChallengeCodeWhenCodeDoesntMatchCache() {
-        String phoneNumber = "1234567890";
+        String phoneNumber = USER1_PHONE;
         String cachedCode = "456789";
         String sentCode = "123456";
         when(cacheService.get(any(), any())).thenReturn(cachedCode);

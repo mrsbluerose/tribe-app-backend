@@ -1,7 +1,7 @@
 package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserServiceImplTest extends AbstractTestConstants {
+public class UserServiceImplTest implements UserTestConstants {
 
     @TestConfiguration
     static class UserServiceTestContextConfiguration {
@@ -64,14 +64,14 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void testCreateNewUser() {
         // given
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
 
         Mockito.when(userRepository.findByNamePhoneOrEmail(any(String.class), any(String.class), any(String.class)))
                 .thenReturn(Optional.empty());
 
         Mockito.when(userRepository.save(any(User.class))).thenReturn(user1);
 
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         // when
         userService.createNewUser(userRequest, USER1_PREFERRED_CONTACT_METHOD);
@@ -92,8 +92,8 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void testCreateUser_whenUsernameBelongsToExistingUser() {
         // given
-        User user1 = getUser1();
-        User user2 = getUser2();
+        User user1 = UserTestConstants.getUser1();
+        User user2 = UserTestConstants.getUser2();
 
         Mockito.when(userRepository.findByNamePhoneOrEmail(any(String.class), any(String.class), any(String.class)))
                 .thenReturn(Optional.of(user2));
@@ -102,7 +102,7 @@ public class UserServiceImplTest extends AbstractTestConstants {
         boolean caughtException = false;
 
         try {
-            userService.createNewUser(getUserRequestFor(user1), USER1_PREFERRED_CONTACT_METHOD);
+            userService.createNewUser(UserTestConstants.getUserRequestFor(user1), USER1_PREFERRED_CONTACT_METHOD);
         } catch (Exception e) {
             // then
             caughtException = true;
@@ -115,9 +115,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ValueSource(strings = {"a"})
     @NullSource
     public void createNewUserWhenNameInvalid(String name) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setName(name);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
         String preferredContactMethod = "email";
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -131,9 +131,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ParameterizedTest
     @NullSource
     public void createNewUserWhenPhoneInvalid(String phone) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setPhone(phone);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
         String preferredContactMethod = "email";
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -147,9 +147,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ParameterizedTest
     @NullSource
     public void createNewUserWhenEmailInvalid(String email) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setEmail(email);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
         String preferredContactMethod = "email";
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -164,9 +164,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ParameterizedTest
     @NullAndEmptySource
     public void createNewUserWhenPasswordInvalid(String password) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setPassword(password);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
         String preferredContactMethod = "email";
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -180,10 +180,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void testUpdateUser_happyPath() {
         // given
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setName("Barry Johnson");
 
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         Mockito.when(userRepository.findById(any(Long.class))).thenReturn(Optional.of(user1));
 
@@ -208,10 +208,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void testUpdateUser_whenGivenUserIdIsNotFound() {
         // given
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setName("Barry Johnson");
 
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         Mockito.when(userRepository.findById(any(Long.class))).thenReturn(Optional.empty());
 
@@ -233,10 +233,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @NullSource
     public void testUpdateUser_whenGivenNameIsInvalid(String name) {
         // given
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setName(name);
 
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         // when
         boolean caughtException = false;
@@ -255,9 +255,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ParameterizedTest
     @NullSource
     public void testUpdateUser_whenEmailIsNotValid(String email) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setEmail(email);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         assertThrows(IllegalArgumentException.class, () -> {
             userService.update(userRequest);
@@ -270,9 +270,9 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @ParameterizedTest
     @NullSource
     public void testUpdateUser_whenPhoneIsNotValid(String phone) {
-        User user1 = getUser1();
+        User user1 = UserTestConstants.getUser1();
         user1.setPhone(phone);
-        UserRequest userRequest = getUserRequestFor(user1);
+        UserRequest userRequest = UserTestConstants.getUserRequestFor(user1);
 
         assertThrows(IllegalArgumentException.class, () -> {
             userService.update(userRequest);
@@ -284,10 +284,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testGetAllUsersFindsListOfTwoTestUsers() {
-        User user1 = getUser1();
-        user1.setRoles(getUserRoles_Admin());
-        User user2 = getUser2();
-        user2.setRoles(getUserRoles_AccountHolder());
+        User user1 = UserTestConstants.getUser1();
+        user1.setRoles(UserTestConstants.getUserRoles_Admin_AccountHolder());
+        User user2 = UserTestConstants.getUser2();
+        user2.setRoles(UserTestConstants.getUserRoles_AccountHolder());
 
         List<User> users = new ArrayList<>();
         users.add(user1);
@@ -335,7 +335,7 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void find() {
         String email = USER1_EMAIL;
-        Optional<User> expectedUser = Optional.of(getUser1());
+        Optional<User> expectedUser = Optional.of(UserTestConstants.getUser1());
         when(userRepository.findByPhoneOrEmail(anyString())).thenReturn(expectedUser);
         ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -348,7 +348,7 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void findById() {
         Long id = USER1_ID;
-        Optional<User> expectedUser = Optional.of(getUser1());
+        Optional<User> expectedUser = Optional.of(UserTestConstants.getUser1());
         when(userRepository.findById(anyLong())).thenReturn(expectedUser);
         ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
 
@@ -364,10 +364,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
         String phoneNumber = "3333333333";
         String smsChallengeCode = "code";
 
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         user.setPassword(password);
         user.setPhone(phoneNumber);
-        user.setRoles(getUserRoles_Admin());
+        user.setRoles(UserTestConstants.getUserRoles_Admin_AccountHolder());
 
         List users = new ArrayList<>();
         users.add(user);
@@ -436,10 +436,10 @@ public class UserServiceImplTest extends AbstractTestConstants {
     @Test
     public void testGetLoggedInUser() {
         // test data
-        Long testId = getUser1().getId();
+        Long testId = UserTestConstants.getUser1().getId();
 
         // mock data
-        UserPrincipal mockUserPrincipal = new UserPrincipal(getUser1());
+        UserPrincipal mockUserPrincipal = new UserPrincipal(UserTestConstants.getUser1());
         Authentication mockAuthentication = new UsernamePasswordAuthenticationToken(mockUserPrincipal, null);
         SecurityContext mockSecurityContext = mock(SecurityContext.class);
 
