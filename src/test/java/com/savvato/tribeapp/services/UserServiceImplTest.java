@@ -31,9 +31,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Matchers.any;
+//import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -327,7 +326,7 @@ public class UserServiceImplTest extends AbstractTestConstants {
                         break;
                     }
                 }
-                assertTrue("UserRoleDTO not found in expectedRoles: " + rtnRole,found);
+                assertTrue(found, "UserRoleDTO not found in expectedRoles: " + rtnRole);
             }
         }
     }

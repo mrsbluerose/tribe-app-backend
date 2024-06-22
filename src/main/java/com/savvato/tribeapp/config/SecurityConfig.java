@@ -2,7 +2,7 @@ package com.savvato.tribeapp.config;
 
 import java.util.Arrays;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.savvato.tribeapp.config.filters.JwtTokenFilter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -12,14 +12,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,66 +34,73 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
         bearerFormat = "JWT",
         scheme = "bearer"
 )
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    
     private final JwtTokenFilter jwtTokenFilter;
 
-    @Autowired
     public SecurityConfig(UserDetailsService userDetailsService, JwtTokenFilter jwtTokenFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtTokenFilter = jwtTokenFilter;
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-
-        // Enable CORS and disable CSRF
-    	http = http.cors().and().csrf().disable();
-    	
-    	// Set session management to stateless
-    	http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
-    	
-    	// Set unauthorized requests exception handler
-    	http = http.exceptionHandling()
-    			.authenticationEntryPoint(
-    				(request, response, ex) -> {
-    					response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
-    				}
-    			).and();
-    	// Set permissions on endpoints
-    	http.authorizeRequests()
-        .antMatchers(HttpMethod.HEAD, "/api/resource/topic/*").permitAll()  // this is because of the saveAs extension we use on the front end.. it won't let us pass in headers, so no authorization can be had.. ASAP, find a better way.
-        .antMatchers(HttpMethod.GET, "/api/resource/topic/*").permitAll()  // this is because of the saveAs extension we use on the front end.. it won't let us pass in headers, so no authorization can be had.. ASAP, find a better way.
-    	.antMatchers(HttpMethod.POST, "/api/public/login").permitAll()
-    	.antMatchers(HttpMethod.POST, "/api/public/user/new").permitAll()
-        .antMatchers(HttpMethod.GET, "/api/public/user/isEmailAddressAvailable").permitAll()
-        .antMatchers(HttpMethod.GET, "/api/public/user/isPhoneNumberAvailable").permitAll()
-        .antMatchers(HttpMethod.GET, "/api/public/user/isUsernameAvailable").permitAll()
-        .antMatchers(HttpMethod.POST, "/api/public/user/changeLostPassword").permitAll()
-        .antMatchers(HttpMethod.GET, "/api/public/user/isUserInformationUnique").permitAll()
-        .antMatchers(HttpMethod.POST, "/api/public/sendSMSChallengeCodeToPhoneNumber").permitAll()
-        .antMatchers(HttpMethod.POST, "/api/public/isAValidSMSChallengeCode").permitAll()
-        .antMatchers("/swagger-ui/**", "/swagger-ui**", "/docs/**", "/docs**").permitAll()
-    	.anyRequest().hasAnyRole("admin,accountholder");
-
-    	
-    	// Add JWT token filter
-    	http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
-    }
-    
-    //====================encoders
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        authBuilder.authenticationProvider(authenticationProvider());
+        return authBuilder.build();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Enable CORS using the new method
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Disable CSRF using the new method
+                .csrf(csrf -> csrf.disable())
+                // Set session management to stateless
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Set unauthorized requests exception handler
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, ex) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
+                        }))
+                // Set permissions on endpoints
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers(HttpMethod.HEAD,   "/api/resource/topic/*").permitAll()
+                                .requestMatchers(HttpMethod.GET,    "/api/resource/topic/*").permitAll()
+                                .requestMatchers(HttpMethod.POST,   "/api/public/login").permitAll()
+                                .requestMatchers(HttpMethod.POST,   "/api/public/user/new").permitAll()
+                                .requestMatchers(HttpMethod.GET,    "/api/public/user/isEmailAddressAvailable").permitAll()
+                                .requestMatchers(HttpMethod.GET,    "/api/public/user/isPhoneNumberAvailable").permitAll()
+                                .requestMatchers(HttpMethod.GET,    "/api/public/user/isUsernameAvailable").permitAll()
+                                .requestMatchers(HttpMethod.POST,   "/api/public/user/changeLostPassword").permitAll()
+                                .requestMatchers(HttpMethod.GET,    "/api/public/user/isUserInformationUnique").permitAll()
+                                .requestMatchers(HttpMethod.POST,   "/api/public/sendSMSChallengeCodeToPhoneNumber").permitAll()
+                                .requestMatchers(HttpMethod.POST,   "/api/public/isAValidSMSChallengeCode").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/swagger-ui**", "/docs/**", "/docs**").permitAll()
+                                .anyRequest().hasAnyRole("admin", "accountholder")
+                );
+
+        // Add JWT token filter
+        http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+    
     //===================CORS
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
@@ -104,11 +112,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Override @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
     }
 
 }

@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,7 +49,6 @@ public class AttributesAPIController {
     AttributesAPIController() {
     }
 
-
     @GetAttributesForUser
     @GetMapping("/{userId}")
     public ResponseEntity<List<AttributeDTO>> getAttributesForUser(
@@ -69,6 +68,7 @@ public class AttributesAPIController {
         List<ToBeReviewedDTO> rtn = reviewSubmittingUserService.getUserPhrasesToBeReviewed(userId);
         return ResponseEntity.status(HttpStatus.OK).body(rtn);
     }
+
     @ApplyPhraseToUser
     @PostMapping
     public ResponseEntity<GenericResponseDTO> applyPhraseToUser(@RequestBody @Valid AttributesRequest req) {

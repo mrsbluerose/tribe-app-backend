@@ -2,6 +2,7 @@ package com.savvato.tribeapp.controllers;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.constants.UserTestConstants;
@@ -12,7 +13,6 @@ import com.savvato.tribeapp.dto.ToBeReviewedDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.entities.NotificationType;
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.services.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -39,6 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AttributesAPIController.class)
+@Import(SecurityConfig.class)
 public class AttributesAPITest implements UserTestConstants, PhraseTestConstants {
     private UserPrincipal userPrincipal;
     private User user;
@@ -386,9 +388,9 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
     @Test
     public void getUserPhrasesToBeReviewedHappyPathNoPhrases() throws Exception {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
-                .thenReturn(new UserPrincipal(user));
-        String auth = AuthServiceImpl.generateAccessToken(user);
-        Long userId = USER1_ID;
+                .thenReturn(new UserPrincipal(UserTestConstants.getUser3()));
+        String auth = AuthServiceImpl.generateAccessToken(UserTestConstants.getUser3());
+        Long userId = USER3_ID;
 
         when(reviewSubmittingUserService.getUserPhrasesToBeReviewed(anyLong())).thenReturn(new ArrayList<>());
 

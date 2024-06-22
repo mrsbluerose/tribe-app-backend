@@ -1,6 +1,7 @@
 package com.savvato.tribeapp.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.dto.ReviewDecisionReasonDTO;
@@ -13,6 +14,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -24,6 +26,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewDecisionReasonAPIController.class)
+@Import(SecurityConfig.class)
 public class ReviewDecisionReasonAPITest implements UserTestConstants {
 
     @Autowired

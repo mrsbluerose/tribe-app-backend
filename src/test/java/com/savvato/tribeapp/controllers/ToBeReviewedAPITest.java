@@ -2,6 +2,7 @@ package com.savvato.tribeapp.controllers;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.constants.UserTestConstants;
@@ -18,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -35,6 +37,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ToBeReviewedAPIController.class)
+@Import(SecurityConfig.class)
 public class ToBeReviewedAPITest implements UserTestConstants, PhraseTestConstants {
 
   private UserPrincipal userPrincipal;
