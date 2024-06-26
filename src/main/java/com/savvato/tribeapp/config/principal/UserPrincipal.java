@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.savvato.tribeapp.entities.UserRole;
-import org.apache.commons.collections4.CollectionUtils;
 import com.savvato.tribeapp.entities.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,7 +25,7 @@ public class UserPrincipal implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         final Set<UserRole> roles = user != null ? user.getRoles() : null;
         final List<GrantedAuthority> authorities = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(roles)) {
+        if (roles != null && !roles.isEmpty()) {
             roles.forEach(role -> {
                 if (role != null) {
 //                	System.out.println("User has role [" + role.getName() + "]");

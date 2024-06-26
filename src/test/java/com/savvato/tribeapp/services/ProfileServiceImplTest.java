@@ -1,6 +1,6 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.ProfileDTO;
 import com.savvato.tribeapp.entities.User;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 
-public class ProfileServiceImplTest extends AbstractTestConstants {
+public class ProfileServiceImplTest implements UserTestConstants {
     @TestConfiguration
     static class ProfileServiceTestContextConfiguration {
         @Bean
@@ -38,23 +38,23 @@ public class ProfileServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void getByUserIdWhenUserExists() {
-        User user = getUser1();
-        Long userId = 1L;
+        User user = UserTestConstants.getUser1();
+        //Long userId = 1L;
         ProfileDTO profile = ProfileDTO.builder().name(user.getName()).phone(user.getPhone()).email(user.getEmail()).created(String.valueOf(user.getCreated().getTime())).lastUpdated(String.valueOf(user.getLastUpdated().getTime())).build();
         Optional<User> userOpt = Optional.of(user);
         Optional<ProfileDTO> profileOpt = Optional.of(profile);
 
         when(userService.findById(any())).thenReturn(userOpt);
-        Optional<ProfileDTO> result = profileService.getByUserId(userId);
+        Optional<ProfileDTO> result = profileService.getByUserId(user.getId());
         ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
         verify(userService, times(1)).findById(userIdCaptor.capture());
-        assertEquals(userIdCaptor.getValue(), userId);
+        assertEquals(userIdCaptor.getValue(), user.getId());
         assertThat(result).usingRecursiveComparison().isEqualTo(profileOpt);
     }
 
     @Test
     public void getByUserIdWhenUserNotFound() {
-        Long userId = 100L;
+        Long userId = USER1_ID;
         Optional<User> userOpt = Optional.empty();
         ProfileDTO profile = ProfileDTO.builder().build();
         Optional<ProfileDTO> profileOpt = Optional.of(profile);
@@ -69,7 +69,7 @@ public class ProfileServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void updateWhenUserUpdateSucceeds() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserRequest userRequest = new UserRequest();
         Long userId = user.getId();
         String name = user.getName();

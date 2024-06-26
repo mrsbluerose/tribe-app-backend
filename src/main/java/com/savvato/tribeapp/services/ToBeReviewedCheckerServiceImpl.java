@@ -43,14 +43,9 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
 
     @Autowired
     RestTemplate restTemplate;
+
     @Value("${WORDS_API_KEY}")
     private String apiKey;
-
-    @Generated
-    @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder.build();
-    }
 
     @Scheduled(fixedDelayString = "PT10M")
     @Override

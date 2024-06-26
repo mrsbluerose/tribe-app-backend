@@ -1,6 +1,6 @@
 package com.savvato.tribeapp.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Calendar;
 
 @Entity

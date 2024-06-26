@@ -3,8 +3,9 @@ package com.savvato.tribeapp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ChangePasswordRequest;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
@@ -21,6 +22,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -42,7 +44,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserAPIController.class)
-public class UserAPITest {
+@Import(SecurityConfig.class)
+public class UserAPITest implements UserTestConstants {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -94,21 +98,8 @@ public class UserAPITest {
 
     @Test
     public void createUserHappyPath() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
 
-        User user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("admin");
-        user.setEnabled(1);
-        user.setPhone("1234567890");
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
+        User user = UserTestConstants.getUser3();
 
         UserRequest userRequest = new UserRequest();
         userRequest.id = user.getId();
@@ -139,16 +130,13 @@ public class UserAPITest {
 
     @Test
     public void createUserWhenErrorThrown() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
+        Set<UserRole> rolesSet = UserTestConstants.getUserRoles_Admin_AccountHolder_PhraseReviewer();
 
         UserRequest userRequest = new UserRequest();
         userRequest.id = null;
         userRequest.name = null;
-        userRequest.phone = Constants.FAKE_USER_PHONE2;
-        userRequest.email = Constants.FAKE_USER_EMAIL2;
+        userRequest.phone = UserTestConstants.USER2_PHONE;
+        userRequest.email = UserTestConstants.USER2_EMAIL;
         userRequest.password = null;
         String errorMessage = "Missing critical UserRequest values.";
         when(userService.createNewUser(any(UserRequest.class), anyString()))
@@ -170,7 +158,7 @@ public class UserAPITest {
 
     @Test
     public void isUsernameAvailable() throws Exception {
-        String username = "admin";
+        String username = USER1_NAME;
         when(userRepository.findByName(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new User()));
@@ -199,7 +187,7 @@ public class UserAPITest {
 
     @Test
     public void isEmailAddressAvailable() throws Exception {
-        String email = Constants.FAKE_USER_EMAIL2;
+        String email = USER2_EMAIL;
         when(userRepository.findByEmail(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new User()));
@@ -231,7 +219,7 @@ public class UserAPITest {
 
     @Test
     public void isPhoneNumberAvailable() throws Exception {
-        String phone = Constants.FAKE_USER_PHONE2;
+        String phone = USER2_PHONE;
         when(userRepository.findByPhone(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new ArrayList<>()))
@@ -270,12 +258,15 @@ public class UserAPITest {
 
     @Test
     public void isUserInformationUniqueWhenUsernameTaken() throws Exception {
-        String email = Constants.FAKE_USER_EMAIL2;
-        String phone = Constants.FAKE_USER_PHONE2;
-        String username = Constants.FAKE_USER_NAME2;
-        String password = "admin";
+        String email = USER2_EMAIL;
+        String phone = USER2_PHONE;
+        String username = USER2_NAME;
+        String password = USER2_PASSWORD;
         when(userRepository.findByName(anyString()))
                 .thenReturn(Optional.of(new User(username, password, phone, email)));
+
+        String template = "{\"response\": \"%s\"}";
+        String expectedMessage = String.format(template, "username");
 
         this.mockMvc
                 .perform(
@@ -285,18 +276,21 @@ public class UserAPITest {
                                 .param("email", email)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"response\": \"username\"}"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
     }
 
     @Test
     public void isUserInformationUniqueWhenEmailTaken() throws Exception {
-        String email = Constants.FAKE_USER_EMAIL2;
-        String phone = Constants.FAKE_USER_PHONE2;
-        String username = Constants.FAKE_USER_NAME2;
-        String password = "admin";
+        String email = USER2_EMAIL;
+        String phone = USER2_PHONE;
+        String username = USER2_NAME;
+        String password = USER2_PASSWORD;
         when(userRepository.findByEmail(anyString()))
                 .thenReturn(Optional.of(new User(username, password, phone, email)));
+
+        String template = "{\"response\": \"%s\"}";
+        String expectedMessage = String.format(template, "email");
 
         this.mockMvc
                 .perform(
@@ -306,18 +300,21 @@ public class UserAPITest {
                                 .param("email", email)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"response\": \"email\"}"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
     }
 
     @Test
     public void isUserInformationUniqueWhenPhoneTaken() throws Exception {
-        String email = Constants.FAKE_USER_EMAIL2;
-        String phone = Constants.FAKE_USER_PHONE2;
-        String username = Constants.FAKE_USER_NAME2;
-        String password = "admin";
+        String email = USER2_EMAIL;
+        String phone = USER2_PHONE;
+        String username = USER2_NAME;
+        String password = USER2_PASSWORD;
         User user = new User(username, password, phone, email);
         when(userRepository.findByPhone(anyString())).thenReturn(Optional.of(List.of(user)));
+
+        String template = "{\"response\": \"%s\"}";
+        String expectedMessage = String.format(template, "phone");
 
         this.mockMvc
                 .perform(
@@ -327,17 +324,20 @@ public class UserAPITest {
                                 .param("email", email)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"response\": \"phone\"}"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
     }
 
     @Test
     public void isUserInformationUniqueHappyPath() throws Exception {
-        String email = Constants.FAKE_USER_EMAIL2;
-        String phone = Constants.FAKE_USER_PHONE2;
-        String username = Constants.FAKE_USER_NAME2;
-        String password = "admin";
+        String email = USER2_EMAIL;
+        String phone = USER2_PHONE;
+        String username = USER2_NAME;
+        String password = USER2_PASSWORD;
         User user = new User(username, password, phone, email);
+
+        String template = "{\"response\": %b}";
+        String expectedMessage = String.format(template, true);
 
         this.mockMvc
                 .perform(
@@ -347,7 +347,7 @@ public class UserAPITest {
                                 .param("email", email)
                                 .characterEncoding("utf-8"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"response\": true}"))
+                .andExpect(content().json(expectedMessage))
                 .andReturn();
     }
 
@@ -360,28 +360,28 @@ public class UserAPITest {
 
         User user = new User();
         user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
+        user.setName(USER1_NAME);
         user.setPassword("phrase_reviewer"); // pw => admin
         user.setEnabled(1);
         user.setRoles(rolesSet);
         user.setCreated();
         user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
+        user.setEmail(USER1_EMAIL);
         user.setRoles(Set.of(UserRole.ROLE_ACCOUNTHOLDER));
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
         ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
-        changePasswordRequest.phoneNumber = Constants.FAKE_USER_PHONE2;
+        changePasswordRequest.phoneNumber = USER2_PHONE;
         changePasswordRequest.pw = "admin";
         changePasswordRequest.smsChallengeCode = "ABCDEF";
         UserDTO expectedUserDTO =
                 UserDTO.builder()
-                        .id(Constants.NULL_VALUE_ID)
-                        .name(Constants.FAKE_USER_NAME2)
+                        .id(USER2_ID)
+                        .name(USER2_NAME)
                         .password("not an admin")
                         .phone(changePasswordRequest.phoneNumber)
-                        .email(Constants.FAKE_USER_EMAIL2)
+                        .email(USER2_EMAIL)
                         .enabled(1)
                         .roles(getUserRoleDTOSet(user))
                         .build();

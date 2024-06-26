@@ -2,6 +2,7 @@ package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
-public class UserDetailsServiceTRIBEAPPTest extends AbstractTestConstants {
+public class UserDetailsServiceTRIBEAPPTest implements UserTestConstants {
     @TestConfiguration
     static class UserDetailsServiceTRIBEAPPTestContextConfiguration {
         @Bean
@@ -39,7 +40,7 @@ public class UserDetailsServiceTRIBEAPPTest extends AbstractTestConstants {
 
     @Test
     public void loadUserByUsernameWhenUserExists() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         String email = user.getEmail();
         Optional<User> userOpt = Optional.of(user);
         UserDetails expectedRtn = new UserPrincipal(user);

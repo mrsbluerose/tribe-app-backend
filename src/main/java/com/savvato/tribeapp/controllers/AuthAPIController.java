@@ -6,7 +6,7 @@ import com.savvato.tribeapp.controllers.dto.AuthRequest;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.services.AuthServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
