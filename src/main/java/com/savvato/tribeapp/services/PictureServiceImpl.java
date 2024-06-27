@@ -2,8 +2,6 @@ package com.savvato.tribeapp.services;
 
 import com.savvato.tribeapp.constants.Constants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
@@ -15,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
-
 
 @Service
 @Slf4j
@@ -44,25 +41,26 @@ public class PictureServiceImpl implements PictureService {
             delay *= 2;
 
             try {
-                log.debug("Just about to get the file " + dir + "/" + filename);
-                InputStream is = new FileSystemResource(dir + "/" + filename).getInputStream();
+                log.debug("Just about to get the file " + dir + File.separator + filename);
+                FileSystemResource fileSystemResource = getFileSystemResource(dir + File.separator + filename);
+                InputStream is = getInputStreamFromFileSystemResource(fileSystemResource);
 
-                BufferedImage originalImage = ImageIO.read(is);
+                BufferedImage originalImage = readImage(is);
 
                 if (originalImage != null) {
 
-                    log.debug("YES! Found the file.. doing the resize... " + dir + "/" + filename);
+                    log.debug("YES! Found the file.. doing the resize... " + dir + File.separator + filename);
                     BufferedImage resizedImage = resizeImage(originalImage, 250, 250);
 
-                    File out = new File(dir + "/" + filename + "_thumbnail");
+                    File out = createFile(dir + File.separator + filename + "_thumbnail");
                     ImageIO.write(resizedImage, "jpg", out);
 
                     done = true;
                 } else {
-                    log.debug("nooo... the file wasn't there yet."+ dir + "/" + filename);
+                    log.debug("nooo... the file wasn't there yet."+ dir + File.separator + filename);
                 }
             } catch (IOException ioe) {
-                throw new IOException("Expected the file " + dir + "/" + filename + " to be in place, but we got this exception instead!.", ioe);
+                throw new IOException("Expected the file " + dir + File.separator + filename + " to be in place, but we got this exception instead!.", ioe);
             }
         }
 
@@ -71,6 +69,27 @@ public class PictureServiceImpl implements PictureService {
         }
     }
 
+    @Override
+    public InputStream getInputStreamFromFileSystemResource(FileSystemResource fileSystemResource) throws IOException {
+        return fileSystemResource.getInputStream();
+    }
+
+    @Override
+    public FileSystemResource getFileSystemResource(String path) {
+        return new FileSystemResource(path);
+    }
+
+    @Override
+    public BufferedImage readImage(InputStream inputStream) throws IOException {
+        return ImageIO.read(inputStream);
+    }
+
+    @Override
+    public File createFile(String path) {
+        return new File(path);
+    }
+
+    @Override
     public String transformFilenameUsingSizeInfo(String photoSize, String filename) {
         if (photoSize.equals(Constants.PHOTO_SIZE_THUMBNAIL))
             return filename + "_thumbnail";
@@ -78,7 +97,8 @@ public class PictureServiceImpl implements PictureService {
             return filename; // original
     }
 
-    BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
+    @Override
+    public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
         Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_DEFAULT);
         BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
         outputImage.getGraphics().drawImage(resultingImage, 0, 0, null);
