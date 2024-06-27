@@ -1,7 +1,6 @@
 package com.savvato.tribeapp.services;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -10,11 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 
+@Slf4j
 @Service
 public class StorageService {
 
-	private static final Log logger = LogFactory.getLog(StorageService.class);
-	
 	@Autowired
 	private ResourceTypeService resourceTypeService;
     
@@ -28,7 +26,7 @@ public class StorageService {
 	public void store(String resourceType, MultipartFile file, String filename) {
     	String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
 
-		logger.debug("******* ****  **** about to do StorageService::store() " + dir + File.separator + filename);
+		log.debug("******* ****  **** about to do StorageService::store() " + dir + File.separator + filename);
 
     	try {
     		File fdir = new File(dir);
@@ -47,12 +45,12 @@ public class StorageService {
 			e.printStackTrace();
 		}
 
-    	logger.debug("*********     *** successfully exiting the store method .. " + dir + File.separator + filename);
+    	log.debug("*********     *** successfully exiting the store method .. " + dir + File.separator + filename);
     }
 
 //    public Resource loadAsResource(String resourceType, String filename) {
 //		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
-//    	logger.debug("*******         Returning a file resource at: " + dir + "/" + filename);
+//    	log.debug("*******         Returning a file resource at: " + dir + "/" + filename);
 //
 //    	 TODO: The ideal thing to do here would be to have a bean for each resourceType, and
 //    	  that bean would return a FileSystemResource.
@@ -90,7 +88,7 @@ public class StorageService {
     		throw e;
 		}
     	
-    	logger.debug("***************}}  checking isFound: " + dir + File.separator + filename + " --> " + rtn + " " + (rtn != 0));
+    	log.debug("***************}}  checking isFound: " + dir + File.separator + filename + " --> " + rtn + " " + (rtn != 0));
     	
     	return rtn;
     }
@@ -99,7 +97,7 @@ public class StorageService {
     	boolean rtn = false;
 		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
 
-		logger.debug("***************}}  Deleting: " + dir + File.separator + filename);
+		log.debug("***************}}  Deleting: " + dir + File.separator + filename);
 
 		try {
     		File f = new File(dir + File.separator + filename);
@@ -114,7 +112,7 @@ public class StorageService {
 
     public byte[] loadAsByteArray(String resourceType, String filename) {
 		String dir = resourceTypeService.getDirectoryForResourceType(resourceType);
-    	logger.debug("*******         Returning byte array of file at: " + dir + File.separator + filename);
+    	log.debug("*******         Returning byte array of file at: " + dir + File.separator + filename);
 
     	byte[] rtn = null;
     
@@ -127,12 +125,12 @@ public class StorageService {
 //	    		int _hash = getSumOfEachDigitAddedUp(filename.hashCode());
 //	    		rtn = readFile(new ClassPathResource(arr[_hash]));
 //	    	} catch (IOException ioe) {
-//	    		logger.error(ioe);
+//	    		log.error(ioe);
 //	    	}
-			logger.error("Could not find file: " + dir + File.separator + filename);
+			log.error("Could not find file: " + dir + File.separator + filename);
 	    } catch (IOException ioe) {
 	    	// something other than a missing requested file happened.. :(
-	    	logger.error("Something bad happened with the file " + dir + File.separator + filename, ioe);
+	    	log.error("Something bad happened with the file " + dir + File.separator + filename, ioe);
 	    }
 	    
 	    return rtn;
