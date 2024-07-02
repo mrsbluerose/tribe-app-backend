@@ -63,7 +63,7 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
         httpHeaders.set("X-RapidAPI-Key", apiKey);
         httpHeaders.set("X-RapidAPI-Host", "wordsapiv1.p.rapidapi.com");
         String url = "https://wordsapiv1.p.rapidapi.com/words/" + word;
-        HttpEntity<String> entity = new HttpEntity<>("", httpHeaders);
+        HttpEntity<Void> entity = new HttpEntity<>(httpHeaders);
         ResponseEntity<String> response = null;
         Optional responseJson = Optional.empty();
         try {
