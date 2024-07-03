@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <changeSet author="johnathan" id="1">
+    <changeSet author="johnathan" id="1" context="test">
         <sql>DELETE FROM user_user_role_map;</sql>
 
         <sql>INSERT INTO user_user_role_map (user_id, user_role_id) VALUES (1, 1);</sql>
