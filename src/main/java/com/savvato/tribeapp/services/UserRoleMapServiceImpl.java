@@ -16,6 +16,16 @@ public class UserRoleMapServiceImpl implements UserRoleMapService {
     @Autowired
     UserRoleMapRepository userRoleMapRepo;
 
+    @Override
+    public boolean setRolesToUser(Long id, ArrayList<String> permissions) {
+        // clear all roles from user
+        ArrayList<String> allRolesList = new ArrayList<>(getRoles().stream().filter(s -> !s.equals("ACCOUNTHOLDER")).toList());
+        removeRolesFromUser(id, allRolesList);
+
+        // add roles to user
+        return addRolesToUser(id, permissions);
+    }
+
     public List<String> getRoles() {
         // collect each ROLES value's name to list
         return Arrays.stream(UserRoleMapService.ROLES.values()).map(Enum::name).collect(Collectors.toList());

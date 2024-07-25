@@ -86,6 +86,18 @@ public class PermissionsAPIController {
     }
   }
 
+  @SetPermissions
+  @PostMapping("/set")
+  public ResponseEntity<GenericResponseDTO> setPermissions(@RequestBody @Valid PermissionsRequest request) {
+    boolean val = userRoleMapService.setRolesToUser(request.id, request.permissions);
+    GenericResponseDTO rtn =  GenericResponseService.createDTO(val);
+    if (val) {
+      return ResponseEntity.status(HttpStatus.OK).body(rtn);
+    } else {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(rtn);
+    }
+  }
+
   @DeletePermissions
   @DeleteMapping
   public ResponseEntity<GenericResponseDTO> deletePermissions(@RequestBody @Valid PermissionsRequest request) {

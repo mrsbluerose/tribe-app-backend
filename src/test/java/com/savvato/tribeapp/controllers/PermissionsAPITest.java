@@ -401,4 +401,76 @@ public class PermissionsAPITest {
                 .usingRecursiveComparison()
                 .isEqualTo(permissionsRequest.permissions);
     }
+
+    @Test
+    public void setPermissionsWithValidSetOfPermissions() throws Exception {
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+        ArrayList<String> permissions =
+                new ArrayList<>(
+                        List.of(UserRole.ROLE_ACCOUNTHOLDER.getName(), UserRole.ROLE_ADMIN.getName()));
+        PermissionsRequest permissionsRequest = new PermissionsRequest();
+        permissionsRequest.id = user.getId();
+        permissionsRequest.permissions = permissions;
+
+        when(userRoleMapService.setRolesToUser(anyLong(), any())).thenReturn(true);
+        when(GenericResponseService.createDTO(
+                anyBoolean()))
+                .thenReturn(GenericResponseDTO.builder()
+                        .booleanMessage(true)
+                        .build());
+        this.mockMvc
+                .perform(
+                        post("/api/permissions/set")
+                                .header("Authorization", "Bearer " + auth)
+                                .content(gson.toJson(permissionsRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("booleanMessage").value(true))
+                .andReturn();
+
+        verify(userRoleMapService, times(1))
+                .setRolesToUser(userIdCaptor.capture(), permissionsCaptor.capture());
+        assertEquals(userIdCaptor.getValue(), permissionsRequest.id);
+        assertThat(permissionsCaptor.getValue())
+                .usingRecursiveComparison()
+                .isEqualTo(permissionsRequest.permissions);
+    }
+
+    @Test
+    public void setPermissionsWithAnInvalidSetOfPermissions() throws Exception {
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
+                .thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+        ArrayList<String> permissions = new ArrayList<>(List.of("NONEXISTENT_ROLE"));
+        PermissionsRequest permissionsRequest = new PermissionsRequest();
+        permissionsRequest.id = user.getId();
+        permissionsRequest.permissions = permissions;
+
+        when(userRoleMapService.setRolesToUser(anyLong(), any())).thenReturn(false);
+        when(GenericResponseService.createDTO(
+                anyBoolean()))
+                .thenReturn(GenericResponseDTO.builder()
+                        .booleanMessage(false)
+                        .build());
+        this.mockMvc
+                .perform(
+                        post("/api/permissions/set")
+                                .header("Authorization", "Bearer " + auth)
+                                .content(gson.toJson(permissionsRequest))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .characterEncoding("utf-8"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("booleanMessage").value(false))
+                .andReturn();
+
+        verify(userRoleMapService, times(1))
+                .setRolesToUser(userIdCaptor.capture(), permissionsCaptor.capture());
+        assertEquals(userIdCaptor.getValue(), permissionsRequest.id);
+        assertThat(permissionsCaptor.getValue())
+                .usingRecursiveComparison()
+                .isEqualTo(permissionsRequest.permissions);
+    }
 }
