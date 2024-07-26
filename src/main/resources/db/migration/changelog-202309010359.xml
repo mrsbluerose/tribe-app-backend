@@ -12,6 +12,9 @@
             ALTER TABLE connections
             RENAME COLUMN userId2 TO toBeConnectedWithUserId;
         </sql>
+    </changeSet>
+
+    <changeSet author="sun" id="202308300939-02" context="test">
 
         <sql dbms="mysql">
             INSERT INTO connections (id, requestingUserId, toBeConnectedWithUserId)

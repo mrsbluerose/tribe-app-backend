@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <changeSet author="sun" id="202308300939-01">
+    <changeSet author="sun" id="202308300939-01" context="test">
 
         <sql dbms="mysql">
             INSERT INTO user (id, name, phone, email, password, enabled)

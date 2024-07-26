@@ -6,7 +6,7 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
 
-    <changeSet author="maryam" id="202311141812-01">
+    <changeSet author="maryam" id="202311141812-01" context="test">
         <sql dbms="mysql">
             <!-- Password is "admin" for all, and the accounts are all enabled. -->
             INSERT INTO user
@@ -44,7 +44,7 @@
 
         </sql>
     </changeSet>
-    <changeSet id="202311141812-02" author="maryam">
+    <changeSet id="202311141812-02" author="maryam" context="test">
         <sql dbms="mysql">
             INSERT INTO user_user_role_map (user_id, user_role_id) VALUES (7, 1);
             INSERT INTO user_user_role_map (user_id, user_role_id) VALUES (8, 1);
