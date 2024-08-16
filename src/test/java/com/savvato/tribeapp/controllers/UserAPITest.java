@@ -1,35 +1,21 @@
 package com.savvato.tribeapp.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.savvato.tribeapp.config.SecurityConfig;
-import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.ChangePasswordRequest;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.UserRoleDTO;
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.repositories.UserRepository;
 import com.savvato.tribeapp.services.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,47 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserAPIController.class)
-@Import(SecurityConfig.class)
+@ExtendWith(MockitoExtension.class)
 public class UserAPITest implements UserTestConstants {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private UserAPIController userAPIController;
 
-    @MockBean
-    private AuthService authService;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private Gson gson;
-
-    @Autowired
-    private ObjectMapper mapper;
-
-    @MockBean
-    private UserDetailsServiceTRIBEAPP userDetailsServiceTRIBEAPP;
-
-    @MockBean
-    private UserPrincipalService userPrincipalService;
-
-    @MockBean
+    @Mock
     private UserService userService;
-    @MockBean
-    private ProfileService profileService;
 
-    @MockBean
+    @Mock
     private UserRepository userRepository;
-
-    @MockBean
-    private SMSChallengeCodeService smsccs;
 
     @Captor
     ArgumentCaptor<UserRequest> userRequestCaptor;
@@ -89,16 +46,12 @@ public class UserAPITest implements UserTestConstants {
     ArgumentCaptor<String> availabilityQueryCaptor;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        mockMvc =
-                MockMvcBuilders.webAppContextSetup(this.webApplicationContext)
-                        .apply(springSecurity())
-                        .build();
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void createUserHappyPath() throws Exception {
-
+    public void createUserHappyPath() {
         User user = UserTestConstants.getUser3();
 
         UserRequest userRequest = new UserRequest();
@@ -110,28 +63,18 @@ public class UserAPITest implements UserTestConstants {
         Optional<User> userOpt = Optional.of(user);
 
         when(userService.createNewUser(any(UserRequest.class), anyString())).thenReturn(userOpt);
-        MvcResult result =
-                this.mockMvc
-                        .perform(
-                                post("/api/public/user/new")
-                                        .content(gson.toJson(userRequest))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .characterEncoding("utf-8"))
-                        .andExpect(status().isOk())
-                        .andReturn();
+
+        ResponseEntity<User> response = userAPIController.createUser(userRequest);
+
         verify(userService, times(1))
                 .createNewUser(userRequestCaptor.capture(), preferredContactMethodCaptor.capture());
         assertThat(userRequestCaptor.getValue()).usingRecursiveComparison().isEqualTo(userRequest);
-        // using ObjectMapper instead of Gson, because Gson throws error when parsing timestamps of
-        // created & lastUpdated
-        User actualUser = mapper.readValue(result.getResponse().getContentAsString(), User.class);
-        assertThat(actualUser).usingRecursiveComparison().isEqualTo(user);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).usingRecursiveComparison().isEqualTo(user);
     }
 
     @Test
-    public void createUserWhenErrorThrown() throws Exception {
-        Set<UserRole> rolesSet = UserTestConstants.getUserRoles_Admin_AccountHolder_PhraseReviewer();
-
+    public void createUserWhenErrorThrown() {
         UserRequest userRequest = new UserRequest();
         userRequest.id = null;
         userRequest.name = null;
@@ -139,78 +82,55 @@ public class UserAPITest implements UserTestConstants {
         userRequest.email = UserTestConstants.USER2_EMAIL;
         userRequest.password = null;
         String errorMessage = "Missing critical UserRequest values.";
+
         when(userService.createNewUser(any(UserRequest.class), anyString()))
                 .thenThrow(new IllegalArgumentException(errorMessage));
 
-        this.mockMvc
-                .perform(
-                        post("/api/public/user/new")
-                                .content(gson.toJson(userRequest))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(errorMessage))
-                .andReturn();
+        ResponseEntity<String> response = userAPIController.createUser(userRequest);
+
         verify(userService, times(1))
                 .createNewUser(userRequestCaptor.capture(), preferredContactMethodCaptor.capture());
         assertThat(userRequestCaptor.getValue()).usingRecursiveComparison().isEqualTo(userRequest);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isEqualTo(errorMessage);
     }
 
     @Test
-    public void isUsernameAvailable() throws Exception {
+    public void isUsernameAvailable() {
         String username = USER1_NAME;
+
         when(userRepository.findByName(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new User()));
+
         // when userRepository returns empty Optional
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUsernameAvailable")
-                                .param("q", username)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"))
-                .andReturn();
+        boolean isAvailable = userAPIController.isUsernameAvailable(username);
+        assertThat(isAvailable).isTrue();
+
         // when userRepository returns a User
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUsernameAvailable")
-                                .param("q", username)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"))
-                .andReturn();
+        isAvailable = userAPIController.isUsernameAvailable(username);
+        assertThat(isAvailable).isFalse();
+
         verify(userRepository, times(2)).findByName(availabilityQueryCaptor.capture());
         assertEquals(availabilityQueryCaptor.getAllValues().get(0), username);
         assertEquals(availabilityQueryCaptor.getAllValues().get(1), username);
     }
 
     @Test
-    public void isEmailAddressAvailable() throws Exception {
+    public void isEmailAddressAvailable() {
         String email = USER2_EMAIL;
+
         when(userRepository.findByEmail(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new User()));
 
         // when userRepository returns empty Optional
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isEmailAddressAvailable")
-                                .param("q", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"))
-                .andReturn();
+        boolean isAvailable = userAPIController.isEmailAddressAvailable(email);
+        assertThat(isAvailable).isTrue();
 
         // when userRepository returns a User
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isEmailAddressAvailable")
-                                .param("q", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"))
-                .andReturn();
+        isAvailable = userAPIController.isEmailAddressAvailable(email);
+        assertThat(isAvailable).isFalse();
 
         verify(userRepository, times(2)).findByEmail(availabilityQueryCaptor.capture());
         assertEquals(availabilityQueryCaptor.getAllValues().get(0), email);
@@ -218,163 +138,93 @@ public class UserAPITest implements UserTestConstants {
     }
 
     @Test
-    public void isPhoneNumberAvailable() throws Exception {
+    public void isPhoneNumberAvailable() {
         String phone = USER2_PHONE;
+
         when(userRepository.findByPhone(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new ArrayList<>()))
                 .thenReturn(Optional.of(List.of(new User())));
 
         // when userRepository returns an empty Optional
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isPhoneNumberAvailable")
-                                .param("q", phone)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"))
-                .andReturn();
+        boolean isAvailable = userAPIController.isPhoneNumberAvailable(phone);
+        assertThat(isAvailable).isTrue();
 
         // when userRepository returns an empty list
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isPhoneNumberAvailable")
-                                .param("q", phone)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"))
-                .andReturn();
+        isAvailable = userAPIController.isPhoneNumberAvailable(phone);
+        assertThat(isAvailable).isTrue();
 
         // when userRepository returns a list containing a User
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isPhoneNumberAvailable")
-                                .param("q", phone)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"))
-                .andReturn();
+        isAvailable = userAPIController.isPhoneNumberAvailable(phone);
+        assertThat(isAvailable).isFalse();
     }
 
     @Test
-    public void isUserInformationUniqueWhenUsernameTaken() throws Exception {
+    public void isUserInformationUniqueWhenUsernameTaken() {
         String email = USER2_EMAIL;
         String phone = USER2_PHONE;
         String username = USER2_NAME;
         String password = USER2_PASSWORD;
+
         when(userRepository.findByName(anyString()))
                 .thenReturn(Optional.of(new User(username, password, phone, email)));
 
-        String template = "{\"response\": \"%s\"}";
-        String expectedMessage = String.format(template, "username");
+        String expectedMessage = "{\"response\": \"username\"}";
 
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUserInformationUnique")
-                                .param("name", username)
-                                .param("phone", phone)
-                                .param("email", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().json(expectedMessage))
-                .andReturn();
+        String response = userAPIController.isUserInformationUnique(username, phone, email);
+        assertThat(response).isEqualTo(expectedMessage);
     }
 
     @Test
-    public void isUserInformationUniqueWhenEmailTaken() throws Exception {
+    public void isUserInformationUniqueWhenEmailTaken() {
         String email = USER2_EMAIL;
         String phone = USER2_PHONE;
         String username = USER2_NAME;
         String password = USER2_PASSWORD;
+
         when(userRepository.findByEmail(anyString()))
                 .thenReturn(Optional.of(new User(username, password, phone, email)));
 
-        String template = "{\"response\": \"%s\"}";
-        String expectedMessage = String.format(template, "email");
+        String expectedMessage = "{\"response\": \"email\"}";
 
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUserInformationUnique")
-                                .param("name", username)
-                                .param("phone", phone)
-                                .param("email", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().json(expectedMessage))
-                .andReturn();
+        String response = userAPIController.isUserInformationUnique(username, phone, email);
+        assertThat(response).isEqualTo(expectedMessage);
     }
 
     @Test
-    public void isUserInformationUniqueWhenPhoneTaken() throws Exception {
+    public void isUserInformationUniqueWhenPhoneTaken() {
         String email = USER2_EMAIL;
         String phone = USER2_PHONE;
         String username = USER2_NAME;
         String password = USER2_PASSWORD;
-        User user = new User(username, password, phone, email);
-        when(userRepository.findByPhone(anyString())).thenReturn(Optional.of(List.of(user)));
 
-        String template = "{\"response\": \"%s\"}";
-        String expectedMessage = String.format(template, "phone");
+        when(userRepository.findByPhone(anyString())).thenReturn(Optional.of(List.of(new User(username, password, phone, email))));
 
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUserInformationUnique")
-                                .param("name", username)
-                                .param("phone", phone)
-                                .param("email", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().json(expectedMessage))
-                .andReturn();
+        String expectedMessage = "{\"response\": \"phone\"}";
+
+        String response = userAPIController.isUserInformationUnique(username, phone, email);
+        assertThat(response).isEqualTo(expectedMessage);
     }
 
     @Test
-    public void isUserInformationUniqueHappyPath() throws Exception {
+    public void isUserInformationUniqueHappyPath() {
         String email = USER2_EMAIL;
         String phone = USER2_PHONE;
         String username = USER2_NAME;
-        String password = USER2_PASSWORD;
-        User user = new User(username, password, phone, email);
 
-        String template = "{\"response\": %b}";
-        String expectedMessage = String.format(template, true);
+        String expectedMessage = "{\"response\": true}";
 
-        this.mockMvc
-                .perform(
-                        get("/api/public/user/isUserInformationUnique")
-                                .param("name", username)
-                                .param("phone", phone)
-                                .param("email", email)
-                                .characterEncoding("utf-8"))
-                .andExpect(status().isOk())
-                .andExpect(content().json(expectedMessage))
-                .andReturn();
+        String response = userAPIController.isUserInformationUnique(username, phone, email);
+        assertThat(response).isEqualTo(expectedMessage);
     }
 
     @Test
-    public void changePassword() throws Exception {
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-
-        User user = new User();
-        user.setId(1L);
-        user.setName(USER1_NAME);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(USER1_EMAIL);
-        user.setRoles(Set.of(UserRole.ROLE_ACCOUNTHOLDER));
-        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
-                .thenReturn(new UserPrincipal(user));
-        String auth = AuthServiceImpl.generateAccessToken(user);
+    public void changePassword() {
         ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
         changePasswordRequest.phoneNumber = USER2_PHONE;
         changePasswordRequest.pw = "admin";
         changePasswordRequest.smsChallengeCode = "ABCDEF";
+
         UserDTO expectedUserDTO =
                 UserDTO.builder()
                         .id(USER2_ID)
@@ -383,40 +233,13 @@ public class UserAPITest implements UserTestConstants {
                         .phone(changePasswordRequest.phoneNumber)
                         .email(USER2_EMAIL)
                         .enabled(1)
-                        .roles(getUserRoleDTOSet(user))
+                        .roles(Set.of(UserRoleDTO.builder().id(1L).name("ROLE_ACCOUNTHOLDER").build()))
                         .build();
+
         when(userService.changePassword(anyString(), anyString(), anyString())).thenReturn(expectedUserDTO);
 
-        MvcResult result = this.mockMvc
-                .perform(
-                        post("/api/public/user/changePassword")
-                                .header("Authorization", "Bearer " + auth)
-                                .characterEncoding("utf-8")
-                                .content(gson.toJson(changePasswordRequest))
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn();
+        UserDTO result = userAPIController.changePassword(changePasswordRequest);
 
-        Type userDTOType = new TypeToken<UserDTO>() {
-        }.getType();
-        UserDTO actualUserDTO = gson.fromJson(result.getResponse().getContentAsString(), userDTOType);
-        assertThat(actualUserDTO).usingRecursiveComparison().isEqualTo(expectedUserDTO);
-    }
-
-    private Set<UserRoleDTO> getUserRoleDTOSet(User user) {
-        Set<UserRole> userRole = user.getRoles();
-        Set<UserRoleDTO> rtn = new HashSet<>();
-        Iterator<UserRole> iterator = userRole.iterator();
-        while (iterator.hasNext()) {
-            UserRole ur = iterator.next();
-            Long id = ur.getId();
-            String name = ur.getName();
-            UserRoleDTO userRoleDTO = UserRoleDTO.builder()
-                    .id(id)
-                    .name(name)
-                    .build();
-            rtn.add(userRoleDTO);
-        }
-        return rtn;
+        assertThat(result).usingRecursiveComparison().isEqualTo(expectedUserDTO);
     }
 }
