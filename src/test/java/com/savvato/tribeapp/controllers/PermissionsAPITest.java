@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.savvato.tribeapp.config.SecurityConfig;
 import com.savvato.tribeapp.config.principal.UserPrincipal;
 import com.savvato.tribeapp.constants.Constants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.dto.PermissionsRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
@@ -43,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PermissionsAPIController.class)
 @Import(SecurityConfig.class)
-public class PermissionsAPITest {
+public class PermissionsAPITest implements UserTestConstants {
     private UserPrincipal userPrincipal;
     private User user;
     @Autowired
@@ -85,20 +86,7 @@ public class PermissionsAPITest {
                         .apply(springSecurity())
                         .build();
 
-        Set<UserRole> rolesSet = new HashSet<>();
-        rolesSet.add(UserRole.ROLE_ACCOUNTHOLDER);
-        rolesSet.add(UserRole.ROLE_ADMIN);
-        rolesSet.add(UserRole.ROLE_PHRASEREVIEWER);
-
-        user = new User();
-        user.setId(1L);
-        user.setName(Constants.FAKE_USER_NAME1);
-        user.setPassword("phrase_reviewer"); // pw => admin
-        user.setEnabled(1);
-        user.setRoles(rolesSet);
-        user.setCreated();
-        user.setLastUpdated();
-        user.setEmail(Constants.FAKE_USER_EMAIL1);
+       user = UserTestConstants.getUser3();
     }
 
     @Test

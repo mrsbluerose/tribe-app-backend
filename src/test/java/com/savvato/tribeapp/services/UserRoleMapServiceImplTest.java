@@ -1,6 +1,6 @@
 package com.savvato.tribeapp.services;
 
-import com.savvato.tribeapp.constants.AbstractTestConstants;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.entities.UserRoleMap;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserRoleMapServiceImplTest extends AbstractTestConstants {
+public class UserRoleMapServiceImplTest implements UserTestConstants {
 
     @TestConfiguration
     static class UserRoleMapServiceTestContextConfiguration {
@@ -49,8 +49,8 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
         // create a new array list with ADMIN, ACCOUNT_HOLDER, PHRASE_REVIEWER in it
         ArrayList<String> expectedRoles = new ArrayList<String>(List.of("ADMIN", "ACCOUNTHOLDER", "PHRASE_REVIEWER"));
 
-        User user = getUser1();
-        user.setRoles(getUserRoles_AccountHolder());
+        User user = UserTestConstants.getUser1();
+        user.setRoles(UserTestConstants.getUserRoles_AccountHolder());
 
         UserRoleMap admin = new UserRoleMap(user.getId(), 1L);
         UserRoleMap accountholder = new UserRoleMap(user.getId(), 2L);
@@ -80,8 +80,8 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
         // create a new array list with FAKE_ROLE, ADMIN
         ArrayList<String> expectedRoles = new ArrayList<String>(List.of("FAKE_ROLE", "ADMIN"));
 
-        User user = getUser1();
-        user.setRoles(getUserRoles_AccountHolder());
+        User user = UserTestConstants.getUser1();
+        user.setRoles(UserTestConstants.getUserRoles_AccountHolder());
 
         // call userRoleMapService.addRolesToUser() with parameters userRequest.userId and the array list
         boolean returnedFalse = userRoleMapService.addRolesToUser(user.getId(), expectedRoles);
@@ -95,8 +95,8 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
         // create a new array list with ADMIN, ACCOUNT_HOLDER, PHRASE_REVIEWER in it
         ArrayList<String> expectedRoles = new ArrayList<String>(List.of("ADMIN", "PHRASE_REVIEWER"));
 
-        User user = getUser1();
-        user.setRoles(getUserRoles_Admin_AccountHolder());
+        User user = UserTestConstants.getUser1();
+        user.setRoles(UserTestConstants.getUserRoles_Admin_AccountHolder());
 
         // call userRoleMapService.addRolesToUser() with parameters userRequest.userId and the array list
         boolean returnedTrue = userRoleMapService.removeRolesFromUser(user.getId(), expectedRoles);
@@ -117,8 +117,8 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
         // create a new array list with ADMIN, ACCOUNT_HOLDER, PHRASE_REVIEWER in it
         ArrayList<String> expectedRoles = new ArrayList<String>(List.of("ADMIN", "PHRASE_REVIEWER", "ACCOUNTHOLDER"));
 
-        User user = getUser1();
-        user.setRoles(getUserRoles_Admin_AccountHolder());
+        User user = UserTestConstants.getUser1();
+        user.setRoles(UserTestConstants.getUserRoles_Admin_AccountHolder());
 
         // call userRoleMapService.addRolesToUser() with parameters userRequest.userId and the array list
         boolean returnedFalse = userRoleMapService.removeRolesFromUser(user.getId(), expectedRoles);
@@ -136,7 +136,7 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
 
     @Test
     public void testRemoveIncorrectRolesFromUserWhenRemovalFails() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         Long userId = user.getId();
         ArrayList<String> rolesToDelete = user.getRoles().stream().map(Object::toString).collect(Collectors.toCollection(ArrayList::new));
         doThrow(new NullPointerException("Some error happened.")).when(userRoleMapRepository).delete(any(UserRoleMap.class));
@@ -152,9 +152,9 @@ public class UserRoleMapServiceImplTest extends AbstractTestConstants {
         ArrayList<String> expectedRoles = new ArrayList<String>(List.of("ACCOUNTHOLDER"));
 
         // Setting up user object
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         // setting up role to be account holder
-        user.setRoles(getUserRoles_AccountHolder());
+        user.setRoles(UserTestConstants.getUserRoles_AccountHolder());
 
         // call userRoleMapService.addRolesToUser() with parameters userRequest.userId and the array list
         boolean returnedFalse = userRoleMapService.removeRolesFromUser(user.getId(), expectedRoles);
