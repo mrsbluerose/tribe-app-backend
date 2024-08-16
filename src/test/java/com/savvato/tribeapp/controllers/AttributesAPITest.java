@@ -163,19 +163,21 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
         when(notificationService.createNotification(
                 any(NotificationType.class), anyLong(), anyString(), anyString()))
                 .thenReturn(null);
+
+        final boolean boolResponse = true;
         when(GenericResponseService.createDTO(
-                anyString()))
+                boolResponse))
                 .thenReturn(GenericResponseDTO.builder()
-                        .responseMessage("true")
+                        .booleanMessage(boolResponse)
                         .build());
+
         ArgumentCaptor<NotificationType> notificationTypeCaptor =
                 ArgumentCaptor.forClass(NotificationType.class);
         ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<String> notificationTypeNameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> notificationContentCaptor = ArgumentCaptor.forClass(String.class);
 
-        String template = "{\"responseMessage\": \"%s\"}";
-        String expectedMessage = String.format(template, "true");
+        String expectedMessage = "{\"booleanMessage\":" + true + "}";
 
         this.mockMvc
                 .perform(
@@ -224,10 +226,11 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
         when(notificationService.createNotification(
                 any(NotificationType.class), anyLong(), anyString(), anyString()))
                 .thenReturn(null);
+        final boolean boolResponse = false;
         when(GenericResponseService.createDTO(
-                anyString()))
+                boolResponse))
                 .thenReturn(GenericResponseDTO.builder()
-                        .responseMessage("false")
+                        .booleanMessage(boolResponse)
                         .build());
         ArgumentCaptor<NotificationType> notificationTypeCaptor =
                 ArgumentCaptor.forClass(NotificationType.class);
@@ -237,8 +240,7 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
         String notificationContent =
                 "Your attribute was rejected. This attribute is unsuitable and cannot be applied to users.";
 
-        String template = "{\"responseMessage\": \"%s\"}";
-        String expectedMessage = String.format(template, "false");
+        String expectedMessage = "{\"booleanMessage\":" + false + "}";
 
         this.mockMvc
                 .perform(
@@ -284,10 +286,11 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
         when(notificationService.createNotification(
                 any(NotificationType.class), anyLong(), anyString(), anyString()))
                 .thenReturn(null);
+        final boolean boolResponse = false;
         when(GenericResponseService.createDTO(
-                anyString()))
+                boolResponse))
                 .thenReturn(GenericResponseDTO.builder()
-                        .responseMessage("false")
+                        .booleanMessage(boolResponse)
                         .build());
         ArgumentCaptor<NotificationType> notificationTypeCaptor =
                 ArgumentCaptor.forClass(NotificationType.class);
@@ -297,8 +300,7 @@ public class AttributesAPITest implements UserTestConstants, PhraseTestConstants
         String notificationContent =
                 "Your attribute was rejected. This attribute is unsuitable and cannot be applied to users.";
 
-        String template = "{\"responseMessage\": \"%s\"}";
-        String expectedMessage = String.format(template, "false");
+        String expectedMessage = "{\"booleanMessage\":" + false + "}";
 
         this.mockMvc
                 .perform(

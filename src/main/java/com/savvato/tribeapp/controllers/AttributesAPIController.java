@@ -78,16 +78,16 @@ public class AttributesAPIController {
                 req.userId, req.adverb, req.verb, req.preposition, req.noun);
         if (isPhraseApplied) {
           sendNotification(true, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("true");
+          GenericResponseDTO rtn = GenericResponseService.createDTO(true);
           return ResponseEntity.status(HttpStatus.OK).body(rtn);
         } else {
           sendNotification(false, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("false");
+          GenericResponseDTO rtn = GenericResponseService.createDTO(false);
           return ResponseEntity.status(HttpStatus.OK).body(rtn);
         }
       } else {
           sendNotification(false, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("false");
+          GenericResponseDTO rtn = GenericResponseService.createDTO(false);
           return ResponseEntity.status(HttpStatus.OK).body(rtn);
       }
     }
