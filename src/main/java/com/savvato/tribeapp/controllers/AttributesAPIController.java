@@ -5,6 +5,7 @@ import com.savvato.tribeapp.controllers.annotations.controllers.AttributesAPICon
 import com.savvato.tribeapp.controllers.annotations.controllers.AttributesAPIController.GetAttributesForUser;
 import com.savvato.tribeapp.controllers.annotations.controllers.AttributesAPIController.GetUserPhrasesToBeReviewed;
 import com.savvato.tribeapp.controllers.dto.AttributesRequest;
+import com.savvato.tribeapp.controllers.dto.PhraseSequenceRequest;
 import com.savvato.tribeapp.dto.AttributeDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
@@ -49,6 +50,8 @@ public class AttributesAPIController {
     AttributesAPIController() {
     }
 
+    //modify to send seq
+
     @GetAttributesForUser
     @GetMapping("/{userId}")
     public ResponseEntity<List<AttributeDTO>> getAttributesForUser(
@@ -58,6 +61,22 @@ public class AttributesAPIController {
 
         if (opt.isPresent()) return ResponseEntity.status(HttpStatus.OK).body(opt.get());
         else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+    }
+        
+
+    @PostMapping("/update")
+    public ResponseEntity<GenericResponseDTO> uPhraseSequences(@RequestBody @Valid PhraseSequenceRequest req) {
+        PhraseSequenceRequest newRequest = new PhraseSequenceRequest(req.userId, req.phrases);
+
+        // Create a request object that includes userId and the list of PhraseSequenceDataRequest
+        boolean success = attributesService.loadSequence(newRequest);
+
+        if (success){
+            GenericResponseDTO rtn = GenericResponseService.createDTO(true);
+            return ResponseEntity.status(HttpStatus.OK).body(rtn);
+        } else {
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @GetUserPhrasesToBeReviewed

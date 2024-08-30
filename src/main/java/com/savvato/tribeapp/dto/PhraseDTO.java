@@ -21,4 +21,5 @@ public class PhraseDTO {
 
   @Schema(example = "UNICEF")
   public String noun;
+
 }
