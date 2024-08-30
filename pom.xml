@@ -189,13 +189,14 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -235,12 +236,60 @@
                     <target>22</target>
                 </configuration>
             </plugin>
+            <!-- Plugin for tests configured to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.3.1</version>
                 <configuration>
-                    <argLine>-XX:+EnableDynamicAgentLoading -Djdk.instrument.traceUsage -Xshare:off</argLine>
+                    <argLine>-javaagent:${user.home}/.m2/repository/org/jacoco/org.jacoco.agent/0.8.12/org.jacoco.agent-0.8.12-runtime.jar=destfile=${project.build.directory}/jacoco.exec</argLine>
+
+                    <!-- Include the unit and controller tests -->
+                    <includes>
+                        <include>**/unit/**/*Test.java</include>
+                    </includes>
+
+                    <!-- Enable detailed output -->
+                    <systemPropertyVariables>
+                        <surefire.printSummary>true</surefire.printSummary>
+                        <surefire.reportFormat>plain</surefire.reportFormat>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <!-- Plugin for test logs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <outputDirectory>${project.build.directory}/surefire-reports</outputDirectory>
+                    <showSuccess>true</showSuccess>
+                </configuration>
+            </plugin>
+            <!-- Plugin for running integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Include the integration tests -->
+                    <includes>
+                        <include>**/integration/**/*IT.java</include>
+                    </includes>
+
+                    <!-- Enable detailed output -->
+                    <systemPropertyVariables>
+                        <failsafe.printSummary>true</failsafe.printSummary>
+                        <failsafe.reportFormat>plain</failsafe.reportFormat>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
