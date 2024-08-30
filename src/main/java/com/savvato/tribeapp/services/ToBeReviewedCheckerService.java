@@ -1,17 +1,15 @@
 package com.savvato.tribeapp.services;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.savvato.tribeapp.entities.ToBeReviewed;
 
 import java.util.Optional;
 
 public interface ToBeReviewedCheckerService {
-    void updateUngroomedPhrases();
+    void processUngroomedPhrases();
     boolean checkPartOfSpeech(String word, String expectedPartOfSpeech);
 
-    void validatePhrase(ToBeReviewed tbr);
+    void processUngroomedPhrase(ToBeReviewed tbr);
 
-    void updateTables(ToBeReviewed tbr);
-
-    Optional<JsonObject> getWordDetails(String word);
+    Optional<JsonElement> getWordDetails(String word);
 }
