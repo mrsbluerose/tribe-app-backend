@@ -1,6 +1,7 @@
 package com.savvato.tribeapp.services;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.savvato.tribeapp.constants.Constants;
@@ -10,12 +11,9 @@ import com.savvato.tribeapp.entities.ToBeReviewed;
 import com.savvato.tribeapp.repositories.RejectedPhraseRepository;
 import com.savvato.tribeapp.repositories.ReviewSubmittingUserRepository;
 import com.savvato.tribeapp.repositories.ToBeReviewedRepository;
-import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -44,25 +42,27 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
     @Autowired
     RestTemplate restTemplate;
 
-    @Value("${WORDS_API_KEY}")
+    @Value("${MERRIAM_WEBSTER_DICTIONARY_API_KEY}")
     private String apiKey;
 
     @Scheduled(fixedDelayString = "PT10M")
     @Override
-    public void updateUngroomedPhrases() {
-        log.info("from service: Beginning updateUngroomedPhrases process...");
+    public void processUngroomedPhrases() {
         List<ToBeReviewed> ungroomedPhrases = toBeReviewedRepository.getAllUngroomed();
-        for (ToBeReviewed tbr : ungroomedPhrases) {
-            validatePhrase(tbr);
+
+        if (!ungroomedPhrases.isEmpty()) {
+            log.info("Beginning to process ungroomed phrases.");
+
+            for (ToBeReviewed tbr : ungroomedPhrases) {
+                processUngroomedPhrase(tbr);
+            }
         }
     }
 
     @Override
-    public Optional<JsonObject> getWordDetails(String word) {
+    public Optional<JsonElement> getWordDetails(String word) {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set("X-RapidAPI-Key", apiKey);
-        httpHeaders.set("X-RapidAPI-Host", "wordsapiv1.p.rapidapi.com");
-        String url = "https://wordsapiv1.p.rapidapi.com/words/" + word;
+        String url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/" + word + "?key=" + apiKey;
         HttpEntity<Void> entity = new HttpEntity<>(httpHeaders);
         ResponseEntity<String> response = null;
         Optional responseJson = Optional.empty();
@@ -73,37 +73,24 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
             return responseJson;
         }
 
-        responseJson = Optional.of(new JsonParser().parse(response.getBody()).getAsJsonObject());
+        responseJson = Optional.of(new JsonParser().parseString(response.getBody()));
         return responseJson;
     }
 
     @Override
     public boolean checkPartOfSpeech(String word, String expectedPartOfSpeech) {
-        Optional<JsonObject> wordDetails = getWordDetails(word);
+        Optional<JsonElement> wordDetails = getWordDetails(word);
         if (wordDetails.isEmpty()) {
             return false;
         } else {
             JsonArray definitions;
             Set<String> partsOfSpeech = new HashSet<>();
 
-            try {
-                definitions = wordDetails.get().getAsJsonArray("results");
+            definitions = wordDetails.get().getAsJsonArray();
 
-                for (int i = 0; i < definitions.size(); i++) {
-                    JsonObject definition = definitions.get(i).getAsJsonObject();
-                    try {
-                        partsOfSpeech.add(definition.get("partOfSpeech").getAsString());
-                    } catch (UnsupportedOperationException e) {
-                        // Words API may occasionally have a null parts of speech. This is an error on their part.
-                        log.warn(word + " is missing a parts of speech definition from the Words API. Set for manual review.");
-                        return true;
-                    }
-                }
-
-            } catch (NullPointerException e) {
-                // Words API may occasionally have a null results set. This is an error on their part.
-                log.warn(word + " is missing a results set from the Words API. Set for manual review.");
-                return true;
+            for (int i = 0; i < definitions.size(); i++) {
+                JsonObject definition = definitions.get(i).getAsJsonObject();
+                partsOfSpeech.add(definition.get("fl").getAsString());
             }
 
             if (partsOfSpeech.contains(expectedPartOfSpeech)) {
@@ -116,7 +103,7 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
     }
 
     @Override
-    public void validatePhrase(ToBeReviewed tbr) {
+    public void processUngroomedPhrase(ToBeReviewed tbr) {
 
         boolean validPhrase = checkPartOfSpeech(tbr.getNoun(), "noun")
                 && checkPartOfSpeech(tbr.getVerb(), "verb")
@@ -128,17 +115,11 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
             toBeReviewedRepository.save(tbr);
         } else {
             log.warn("Phrase is invalid.");
-            updateTables(tbr);
+            rejectedPhraseRepository.save(new RejectedPhrase(tbr.toString()));
+            // TODO: Create notification for users when their submitted phrase has been rejected after review. Jira TRIB-153
+            ReviewSubmittingUser rsu = new ReviewSubmittingUser(reviewSubmittingUserRepository.findUserIdByToBeReviewedId(tbr.getId()), tbr.getId());
+            reviewSubmittingUserRepository.delete(rsu);
+            toBeReviewedRepository.deleteById(tbr.getId());
         }
     }
-
-    @Override
-    public void updateTables(ToBeReviewed tbr) {
-        rejectedPhraseRepository.save(new RejectedPhrase(tbr.toString()));
-        // TODO: Create notification for users when their submitted phrase has been rejected after review. Jira TRIB-153
-        ReviewSubmittingUser rsu = new ReviewSubmittingUser(reviewSubmittingUserRepository.findUserIdByToBeReviewedId(tbr.getId()), tbr.getId());
-        reviewSubmittingUserRepository.delete(rsu);
-        toBeReviewedRepository.deleteById(tbr.getId());
-    }
-
 }

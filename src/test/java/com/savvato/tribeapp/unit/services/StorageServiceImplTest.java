@@ -50,8 +50,8 @@ public class StorageServiceImplTest {
         String resourceType = "profile";
         byte[] content = new byte[1];
         MultipartFile file = new MockMultipartFile("test file", content);
-        String directoryPathTemp = System.getProperty("java.io.tmpdir") + File.separator + "testFiles";
-        String filename = "";
+        String directoryPathTemp = System.getProperty("java.io.tmpdir") + File.separator;
+        String filename = "testFile.txt";
         when(resourceTypeService.getDirectoryForResourceType(anyString())).thenReturn(directoryPathTemp);
         storageService.store(resourceType, file, filename);
 

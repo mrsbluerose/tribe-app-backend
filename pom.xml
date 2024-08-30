@@ -189,6 +189,7 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
@@ -241,8 +242,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.3.1</version>
                 <configuration>
-                    <!-- Existing argLine configuration for dynamic agent loading -->
-                    <argLine>-XX:+EnableDynamicAgentLoading -Djdk.instrument.traceUsage -Xshare:off</argLine>
+                    <argLine>-javaagent:${user.home}/.m2/repository/org/jacoco/org.jacoco.agent/0.8.12/org.jacoco.agent-0.8.12-runtime.jar=destfile=${project.build.directory}/jacoco.exec</argLine>
 
                     <!-- Include the unit and controller tests -->
                     <includes>
