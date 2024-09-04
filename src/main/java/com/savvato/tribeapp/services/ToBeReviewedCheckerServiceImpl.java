@@ -60,21 +60,24 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
     }
 
     @Override
-    public Optional<JsonElement> getWordDetails(String word) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        String url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/" + word + "?key=" + apiKey;
-        HttpEntity<Void> entity = new HttpEntity<>(httpHeaders);
-        ResponseEntity<String> response = null;
-        Optional responseJson = Optional.empty();
-        try {
-            response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-        } catch (RestClientException e) {
-            log.warn(word + " isn't an English word!");
-            return responseJson;
-        }
+    public void processUngroomedPhrase(ToBeReviewed tbr) {
 
-        responseJson = Optional.of(new JsonParser().parseString(response.getBody()));
-        return responseJson;
+        boolean validPhrase = checkPartOfSpeech(tbr.getNoun(), "noun")
+                && checkPartOfSpeech(tbr.getVerb(), "verb")
+                && (tbr.getAdverb().equals(Constants.NULL_VALUE_WORD) || checkPartOfSpeech(tbr.getAdverb(), "adverb"))
+                && (tbr.getPreposition().equals(Constants.NULL_VALUE_WORD) || checkPartOfSpeech(tbr.getPreposition(), "preposition"));
+
+        if (validPhrase) {
+            tbr.setHasBeenGroomed(true);
+            toBeReviewedRepository.save(tbr);
+        } else {
+            log.warn("Phrase is invalid.");
+            rejectedPhraseRepository.save(new RejectedPhrase(tbr.toString()));
+            // TODO: Create notification for users when their submitted phrase has been rejected after review. Jira TRIB-153
+            ReviewSubmittingUser rsu = new ReviewSubmittingUser(reviewSubmittingUserRepository.findUserIdByToBeReviewedId(tbr.getId()), tbr.getId());
+            reviewSubmittingUserRepository.delete(rsu);
+            toBeReviewedRepository.deleteById(tbr.getId());
+        }
     }
 
     @Override
@@ -103,23 +106,21 @@ public class ToBeReviewedCheckerServiceImpl implements ToBeReviewedCheckerServic
     }
 
     @Override
-    public void processUngroomedPhrase(ToBeReviewed tbr) {
-
-        boolean validPhrase = checkPartOfSpeech(tbr.getNoun(), "noun")
-                && checkPartOfSpeech(tbr.getVerb(), "verb")
-                && (tbr.getAdverb().equals(Constants.NULL_VALUE_WORD) || checkPartOfSpeech(tbr.getAdverb(), "adverb"))
-                && (tbr.getPreposition().equals(Constants.NULL_VALUE_WORD) || checkPartOfSpeech(tbr.getPreposition(), "preposition"));
-
-        if (validPhrase) {
-            tbr.setHasBeenGroomed(true);
-            toBeReviewedRepository.save(tbr);
-        } else {
-            log.warn("Phrase is invalid.");
-            rejectedPhraseRepository.save(new RejectedPhrase(tbr.toString()));
-            // TODO: Create notification for users when their submitted phrase has been rejected after review. Jira TRIB-153
-            ReviewSubmittingUser rsu = new ReviewSubmittingUser(reviewSubmittingUserRepository.findUserIdByToBeReviewedId(tbr.getId()), tbr.getId());
-            reviewSubmittingUserRepository.delete(rsu);
-            toBeReviewedRepository.deleteById(tbr.getId());
+    public Optional<JsonElement> getWordDetails(String word) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        String url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/" + word + "?key=" + apiKey;
+        HttpEntity<Void> entity = new HttpEntity<>(httpHeaders);
+        ResponseEntity<String> response = null;
+        Optional responseJson = Optional.empty();
+        try {
+            response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        } catch (RestClientException e) {
+            log.warn(word + " isn't an English word!");
+            return responseJson;
         }
+
+        responseJson = Optional.of(new JsonParser().parseString(response.getBody()));
+        return responseJson;
     }
+
 }
