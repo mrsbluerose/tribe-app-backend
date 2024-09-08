@@ -10,7 +10,6 @@ import com.savvato.tribeapp.controllers.UserAPIController;
 import com.savvato.tribeapp.controllers.dto.ChangePasswordRequest;
 import com.savvato.tribeapp.controllers.dto.UserRequest;
 import com.savvato.tribeapp.dto.UserDTO;
-import com.savvato.tribeapp.dto.UserRoleDTO;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.repositories.UserRepository;
@@ -387,7 +386,7 @@ public class UserAPIIT implements UserTestConstants {
                         .phone(changePasswordRequest.phoneNumber)
                         .email(USER2_EMAIL)
                         .enabled(1)
-                        .roles(getUserRoleDTOSet(user))
+                        .roles(UserTestConstants.getUserRoleDTOSet(user))
                         .build();
         when(userService.changePassword(anyString(), anyString(), anyString())).thenReturn(expectedUserDTO);
 
@@ -406,21 +405,5 @@ public class UserAPIIT implements UserTestConstants {
         UserDTO actualUserDTO = gson.fromJson(result.getResponse().getContentAsString(), userDTOType);
         assertThat(actualUserDTO).usingRecursiveComparison().isEqualTo(expectedUserDTO);
     }
-
-    private Set<UserRoleDTO> getUserRoleDTOSet(User user) {
-        Set<UserRole> userRole = user.getRoles();
-        Set<UserRoleDTO> rtn = new HashSet<>();
-        Iterator<UserRole> iterator = userRole.iterator();
-        while (iterator.hasNext()) {
-            UserRole ur = iterator.next();
-            Long id = ur.getId();
-            String name = ur.getName();
-            UserRoleDTO userRoleDTO = UserRoleDTO.builder()
-                    .id(id)
-                    .name(name)
-                    .build();
-            rtn.add(userRoleDTO);
-        }
-        return rtn;
-    }
+    
 }
