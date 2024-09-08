@@ -64,7 +64,7 @@ public class ConnectAPIController {
 
   @GetQRCodeString
   @GetMapping("/{userId}")
-  public ResponseEntity getQrCodeString(
+  public ResponseEntity<String> getQrCodeString(
       @Parameter(description = "The user ID of a user", example = "1") @PathVariable Long userId) {
 
     Optional<String> opt = connectService.storeQRCodeString(userId);
