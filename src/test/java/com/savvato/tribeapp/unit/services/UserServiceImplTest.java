@@ -299,7 +299,7 @@ public class UserServiceImplTest implements UserTestConstants {
 
         List<UserDTO> userDTOS = new ArrayList<>();
         for (User user : users) {
-            userDTOS.add(getUserDTO(user));
+            userDTOS.add(UserTestConstants.getUserDTO(user));
         }
 
         Mockito.when(userRepository.findAll()).thenReturn(users);
@@ -375,7 +375,7 @@ public class UserServiceImplTest implements UserTestConstants {
 
         List users = new ArrayList<>();
         users.add(user);
-        UserDTO userDTO = getUserDTO(user);
+        UserDTO userDTO = UserTestConstants.getUserDTO(user);
 
         Mockito.when(smsccs.isAValidSMSChallengeCode(any(String.class), any(String.class))).thenReturn(true);
         Mockito.when(userRepository.findByPhone(any(String.class))).thenReturn(Optional.of(users));
@@ -399,22 +399,6 @@ public class UserServiceImplTest implements UserTestConstants {
             assertTrue(rtnRoles.stream().anyMatch(rtnRole ->
                     rtnRole.id.equals(expectedRole.id) && rtnRole.name.equals(expectedRole.name)));
         }
-    }
-
-    private UserDTO getUserDTO(User user) {
-        UserDTO userDTO = UserDTO.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .password(user.getPassword())
-                .phone(user.getPhone())
-                .email(user.getEmail())
-                .enabled(user.getEnabled())
-                .created(user.getCreated().toString())
-                .lastUpdated(user.getLastUpdated().toString())
-                .roles(getUserRoleDTOSet(user))
-                .build();
-
-        return userDTO;
     }
 
     @Test
@@ -455,22 +439,5 @@ public class UserServiceImplTest implements UserTestConstants {
         Long userId = userService.getLoggedInUserId();
         assertEquals(testId, userId);
     }
-    
-    private Set<UserRoleDTO> getUserRoleDTOSet(User user) {
-        Set<UserRole> userRole = user.getRoles();
-        Set<UserRoleDTO> rtn = new HashSet<>();
-        Iterator<UserRole> iterator = userRole.iterator();
-        while (iterator.hasNext()) {
-            UserRole ur = iterator.next();
-            Long id = ur.getId();
-            String name = ur.getName();
-            UserRoleDTO userRoleDTO = UserRoleDTO.builder()
-                    .id(id)
-                    .name(name)
-                    .build();
-            rtn.add(userRoleDTO);
-        }
-        return rtn;
-    }
-
+ 
 }

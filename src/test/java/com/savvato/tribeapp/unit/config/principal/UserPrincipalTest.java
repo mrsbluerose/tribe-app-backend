@@ -1,8 +1,8 @@
 package com.savvato.tribeapp.unit.config.principal;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
+import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.entities.User;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-public class UserPrincipalTest extends AbstractTestConstants {
+public class UserPrincipalTest implements UserTestConstants {
 
     @Test
     public void getAuthoritiesWhenUserNull() {
@@ -26,7 +26,7 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void getIdWhenUserNotNull() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         Long id = user.getId();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(id, userPrincipal.getId());
@@ -40,7 +40,7 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void getPasswordWhenUserNotNull() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         String password = user.getPassword();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(password, userPrincipal.getPassword());
@@ -54,7 +54,7 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void getUsernameWhenUserNotNull() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         String username = user.getName();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(username, userPrincipal.getUsername());
@@ -68,7 +68,7 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void isEnabledWhenUserNotNullAndUserIsEnabled() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         user.setEnabled(1);
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertTrue(userPrincipal.isEnabled());
@@ -76,7 +76,7 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void isEnabledWhenUserNotNullAndUserIsNotEnabled() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         user.setEnabled(0);
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertFalse(userPrincipal.isEnabled());
@@ -90,21 +90,21 @@ public class UserPrincipalTest extends AbstractTestConstants {
 
     @Test
     public void isAccountNonExpired() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(userPrincipal.isEnabled(), userPrincipal.isAccountNonExpired());
     }
 
     @Test
     public void isAccountNonLocked() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(userPrincipal.isEnabled(), userPrincipal.isAccountNonLocked());
     }
 
     @Test
     public void isCredentialsNonExpired() {
-        User user = getUser1();
+        User user = UserTestConstants.getUser1();
         UserPrincipal userPrincipal = new UserPrincipal(user);
         assertEquals(userPrincipal.isEnabled(), userPrincipal.isCredentialsNonExpired());
     }

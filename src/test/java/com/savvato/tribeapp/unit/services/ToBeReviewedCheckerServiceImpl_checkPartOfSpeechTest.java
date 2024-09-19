@@ -1,7 +1,6 @@
 package com.savvato.tribeapp.unit.services;
 
 import com.google.gson.JsonParser;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.repositories.RejectedPhraseRepository;
 import com.savvato.tribeapp.repositories.ReviewSubmittingUserRepository;
 import com.savvato.tribeapp.repositories.ToBeReviewedRepository;
@@ -22,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-public class ToBeReviewedCheckerServiceImpl_checkPartOfSpeechTest extends AbstractTestConstants {
+public class ToBeReviewedCheckerServiceImpl_checkPartOfSpeechTest {
     @TestConfiguration
     static class ToBeReviewedCheckerServiceImplTestContextConfiguration {
         @Bean

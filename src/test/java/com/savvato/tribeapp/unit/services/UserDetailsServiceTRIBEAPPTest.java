@@ -1,7 +1,6 @@
 package com.savvato.tribeapp.unit.services;
 
 import com.savvato.tribeapp.config.principal.UserPrincipal;
-import com.savvato.tribeapp.constants.AbstractTestConstants;
 import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.repositories.UserRepository;
