@@ -9,7 +9,6 @@ import com.savvato.tribeapp.controllers.PermissionsAPIController;
 import com.savvato.tribeapp.controllers.dto.PermissionsRequest;
 import com.savvato.tribeapp.dto.UserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
-import com.savvato.tribeapp.dto.UserRoleDTO;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 import com.savvato.tribeapp.services.*;
@@ -94,17 +93,7 @@ public class PermissionsAPIIT implements UserTestConstants {
         Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString()))
                 .thenReturn(new UserPrincipal(user));
         String auth = AuthServiceImpl.generateAccessToken(user);
-        UserDTO userDTO =
-                UserDTO.builder()
-                        .id(user.getId())
-                        .name(user.getName())
-                        .email(user.getEmail())
-                        .roles(getUserRoleDTOSet(user))
-                        .password(user.getPassword())
-                        .created(user.getCreated().toString())
-                        .lastUpdated(user.getLastUpdated().toString())
-                        .enabled(user.getEnabled())
-                        .build();
+        UserDTO userDTO = UserTestConstants.getUserDTO(user);
         List<UserDTO> expectedUserList = List.of(userDTO);
         when(userService.getAllUsers()).thenReturn(expectedUserList);
         MvcResult result =
@@ -122,23 +111,6 @@ public class PermissionsAPIIT implements UserTestConstants {
         List<UserDTO> actualUserList =
                 gson.fromJson(result.getResponse().getContentAsString(), userDTOListType);
         assertThat(actualUserList).usingRecursiveComparison().isEqualTo(expectedUserList);
-    }
-
-    private Set<UserRoleDTO> getUserRoleDTOSet(User user) {
-        Set<UserRole> userRole = user.getRoles();
-        Set<UserRoleDTO> rtn = new HashSet<>();
-        Iterator<UserRole> iterator = userRole.iterator();
-        while (iterator.hasNext()) {
-            UserRole ur = iterator.next();
-            Long id = ur.getId();
-            String name = ur.getName();
-            UserRoleDTO userRoleDTO = UserRoleDTO.builder()
-                    .id(id)
-                    .name(name)
-                    .build();
-            rtn.add(userRoleDTO);
-        }
-        return rtn;
     }
 
     @Test
