@@ -1,11 +1,14 @@
 package com.savvato.tribeapp.constants;
 
 import com.savvato.tribeapp.controllers.dto.UserRequest;
+import com.savvato.tribeapp.dto.UserDTO;
+import com.savvato.tribeapp.dto.UserRoleDTO;
 import com.savvato.tribeapp.dto.UsernameDTO;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.entities.UserRole;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public interface UserTestConstants {
@@ -140,4 +143,36 @@ public interface UserTestConstants {
 
         return rtn;
     }
+
+    static UserDTO getUserDTO(User user) {
+        UserDTO userDTO = UserDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .password(user.getPassword())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .enabled(user.getEnabled())
+                .created(user.getCreated().toString())
+                .lastUpdated(user.getLastUpdated().toString())
+                .roles(getUserRoleDTOSet(user))
+                .build();
+        return userDTO;
+    }
+    static Set<UserRoleDTO> getUserRoleDTOSet(User user) {
+        Set<UserRole> userRole = user.getRoles();
+        Set<UserRoleDTO> rtn = new HashSet<>();
+        Iterator<UserRole> iterator = userRole.iterator();
+        while (iterator.hasNext()) {
+            UserRole ur = iterator.next();
+            Long id = ur.getId();
+            String name = ur.getName();
+            UserRoleDTO userRoleDTO = UserRoleDTO.builder()
+                    .id(id)
+                    .name(name)
+                    .build();
+            rtn.add(userRoleDTO);
+        }
+        return rtn;
+    }
+
 }
