@@ -72,10 +72,10 @@ public class AttributesAPIController {
     @ApplyPhraseToUser
     @PostMapping
     public ResponseEntity<GenericResponseDTO> applyPhraseToUser(@RequestBody @Valid AttributesRequest req) {
-      if (phraseService.isPhraseValid(req.adverb, req.verb, req.preposition, req.noun)) {
+      if (!phraseService.isPhraseInvalid(req.adverb, req.verb, req.preposition, req.noun).isRejected) {
         boolean isPhraseApplied =
             phraseService.applyPhraseToUser(
-                req.userId, req.adverb, req.verb, req.preposition, req.noun);
+                req.userId, req.adverb, req.verb, req.preposition, req.noun).isSuccess;
         if (isPhraseApplied) {
           sendNotification(true, req.userId);
           GenericResponseDTO rtn = GenericResponseService.createDTO("true");
