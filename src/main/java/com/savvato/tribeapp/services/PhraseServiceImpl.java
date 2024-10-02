@@ -3,6 +3,7 @@ package com.savvato.tribeapp.services;
 import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.dto.PhraseDTO;
 import com.savvato.tribeapp.dto.projections.PhraseWithUserCountDTO;
+import com.savvato.tribeapp.dto.AttributesApplyPhraseToUserDTO;
 import com.savvato.tribeapp.entities.*;
 import com.savvato.tribeapp.repositories.*;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class PhraseServiceImpl implements PhraseService {
 
 
     @Override
-    public boolean isPhraseValid(String adverb, String verb, String preposition, String noun) {
+    public AttributesApplyPhraseToUserDTO isPhraseValid(String adverb, String verb, String preposition, String noun) {
 
         String adverbLowerCase = changeToLowerCase(adverb);
         String verbLowerCase = changeToLowerCase(verb);
@@ -63,10 +64,10 @@ public class PhraseServiceImpl implements PhraseService {
                 isPhrasePreviouslyRejected(adverbLowerCase, verbLowerCase, prepositionLowerCase, nounLowerCase)) {
             log.warn("Phrase is not valid.");
 
-            return false;
+            return constructAttributesApplyPhraseToUserDTO(false,false,true,false);
         }
 
-        return true;
+        return constructAttributesApplyPhraseToUserDTO(false, false, false, false);
     }
 
     public String changeToLowerCase(String word) {
@@ -128,7 +129,7 @@ public class PhraseServiceImpl implements PhraseService {
     }
 
     @Override
-    public boolean applyPhraseToUser(Long userId, String adverb, String verb, String preposition, String noun) {
+    public AttributesApplyPhraseToUserDTO applyPhraseToUser(Long userId, String adverb, String verb, String preposition, String noun) {
 
         String adverbLowerCase = adverb.isBlank() ? Constants.NULL_VALUE_WORD : changeToLowerCase(adverb);
         String verbLowerCase = changeToLowerCase(verb);
@@ -144,7 +145,8 @@ public class PhraseServiceImpl implements PhraseService {
             userPhraseRepository.save(userPhrase);
             log.info("Phrase added to user " + userId);
 
-            return true;
+            return constructAttributesApplyPhraseToUserDTO(true,true,false, false);
+
         } else {
             Optional<ToBeReviewed> toBeReviewedPhrase = toBeReviewedRepository.findByAdverbAndVerbAndNounAndPreposition(adverbLowerCase, verbLowerCase, nounLowerCase, prepositionLowerCase);
 
@@ -166,7 +168,7 @@ public class PhraseServiceImpl implements PhraseService {
                 log.info("ToBeReviewed phrase has been mapped to user " + userId);
             }
 
-            return false;
+            return constructAttributesApplyPhraseToUserDTO(false,false,false,true);
         }
     }
 
@@ -275,6 +277,16 @@ public class PhraseServiceImpl implements PhraseService {
                 .preposition(optPreposition.orElse("").replaceFirst(Constants.NULL_VALUE_WORD, ""))
                 .noun(optNoun.orElse(""))
                 .build();
+    }
+
+    public AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean success, boolean approved, boolean rejected, boolean inReview){
+        AttributesApplyPhraseToUserDTO rtn = AttributesApplyPhraseToUserDTO.builder()
+                .isSuccess(success)
+                .isApproved(approved)
+                .isRejected(rejected)
+                .isInReview(inReview)
+                .build();
+        return rtn;
     }
 
 }
