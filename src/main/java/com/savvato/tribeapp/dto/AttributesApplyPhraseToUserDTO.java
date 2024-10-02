@@ -8,15 +8,15 @@ import lombok.Builder;
 public class AttributesApplyPhraseToUserDTO {
 
     @Schema(example = "true")
-    public boolean success;
+    public boolean isSuccess;
 
     @Schema(example = "true")
-    public boolean approved;
+    public boolean isApproved;
 
     @Schema(example = "true")
-    public boolean rejected;
+    public boolean isRejected;
 
     @Schema(example = "true")
-    public boolean inReview;
+    public boolean isInReview;
 
 }
