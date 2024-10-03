@@ -168,7 +168,7 @@ public class PhraseServiceImpl implements PhraseService {
                 log.info("ToBeReviewed phrase has been mapped to user " + userId);
             }
 
-            return constructAttributesApplyPhraseToUserDTO(false,false,false,true);
+            return constructAttributesApplyPhraseToUserDTO(true,false,false,true);
         }
     }
 

@@ -243,7 +243,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(false)
+                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -283,7 +283,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(false)
+                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -371,7 +371,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(false)
+                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -413,7 +413,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(false)
+                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
