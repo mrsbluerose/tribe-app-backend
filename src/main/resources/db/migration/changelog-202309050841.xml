@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <changeSet author="loretdemolas" id="202309050841">
+    <changeSet author="loretdemolas" id="202309050841" context="test">
         <insert tableName="notifications">
             <column name="id" value="3"/>
             <column name="user_id" value="2"/>
