@@ -6,6 +6,7 @@ import com.savvato.tribeapp.controllers.annotations.controllers.AttributesAPICon
 import com.savvato.tribeapp.controllers.annotations.controllers.AttributesAPIController.GetUserPhrasesToBeReviewed;
 import com.savvato.tribeapp.controllers.dto.AttributesRequest;
 import com.savvato.tribeapp.dto.AttributeDTO;
+import com.savvato.tribeapp.dto.AttributesApplyPhraseToUserDTO;
 import com.savvato.tribeapp.dto.GenericResponseDTO;
 import com.savvato.tribeapp.dto.ToBeReviewedDTO;
 import com.savvato.tribeapp.entities.NotificationType;
@@ -71,25 +72,18 @@ public class AttributesAPIController {
 
     @ApplyPhraseToUser
     @PostMapping
-    public ResponseEntity<GenericResponseDTO> applyPhraseToUser(@RequestBody @Valid AttributesRequest req) {
-      if (!phraseService.isPhraseInvalid(req.adverb, req.verb, req.preposition, req.noun).isRejected) {
-        boolean isPhraseApplied =
-            phraseService.applyPhraseToUser(
-                req.userId, req.adverb, req.verb, req.preposition, req.noun).isSuccess;
-        if (isPhraseApplied) {
-          sendNotification(true, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("true");
-          return ResponseEntity.status(HttpStatus.OK).body(rtn);
-        } else {
-          sendNotification(false, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("false");
-          return ResponseEntity.status(HttpStatus.OK).body(rtn);
-        }
-      } else {
-          sendNotification(false, req.userId);
-          GenericResponseDTO rtn = GenericResponseService.createDTO("false");
+    public ResponseEntity<AttributesApplyPhraseToUserDTO> applyPhraseToUser(@RequestBody @Valid AttributesRequest req) {
+
+      if (!phraseService.isPhraseValid(req.adverb, req.verb, req.preposition, req.noun)) {
+          AttributesApplyPhraseToUserDTO rtn = phraseService.constructAttributesApplyPhraseToUserDTO(false, false, true, false);
+          sendNotification(rtn, req.userId);
           return ResponseEntity.status(HttpStatus.OK).body(rtn);
       }
+
+      AttributesApplyPhraseToUserDTO rtn = phraseService.applyPhraseToUser(req.userId, req.adverb, req.verb, req.preposition, req.noun);
+      sendNotification(rtn, req.userId);
+
+      return ResponseEntity.status(HttpStatus.OK).body(rtn);
     }
 
     ///api/attributes/?phraseId=xx&userId=xx
@@ -100,15 +94,18 @@ public class AttributesAPIController {
         return ResponseEntity.ok().build();
     }
 
-    private void sendNotification(Boolean approved, Long userId) {
-        if (approved) {
+    private void sendNotification(AttributesApplyPhraseToUserDTO dto, Long userId) {
+        if (dto.isSuccess && dto.isApproved) {
             notificationService.createNotification(
                     NotificationType.ATTRIBUTE_REQUEST_APPROVED,
                     userId,
                     NotificationType.ATTRIBUTE_REQUEST_APPROVED.getName(),
                     "Your attribute has been approved!");
 
-        } else {
+        } else if (dto.isInReview) {
+            notificationService.createNotification(NotificationType.ATTRIBUTE_REQUEST_IN_REVIEW, userId, NotificationType.ATTRIBUTE_REQUEST_IN_REVIEW.getName(), "Your attribute will be reviewed.");
+
+        } else if (dto.isRejected) {
             notificationService.createNotification(
                     NotificationType.ATTRIBUTE_REQUEST_REJECTED,
                     userId,
