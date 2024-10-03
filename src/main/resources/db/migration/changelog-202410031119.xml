@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="audra" id="202410031119-01">
+        <insert tableName="notification_type">
+            <column name="id" value="3"/>
+            <column name="name" value="Attribute request in review"/>
+            <column name="icon_url" value="hourglass-outline"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
