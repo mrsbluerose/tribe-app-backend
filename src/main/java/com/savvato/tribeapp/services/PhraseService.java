@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface PhraseService {
 
-    AttributesApplyPhraseToUserDTO isPhraseValid(String adverb, String verb, String preposition, String noun);
+    boolean isPhraseValid(String adverb, String verb, String preposition, String noun);
 
     AttributesApplyPhraseToUserDTO applyPhraseToUser(Long userId, String adverb, String verb, String preposition, String noun);
 

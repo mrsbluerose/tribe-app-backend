@@ -52,7 +52,7 @@ public class PhraseServiceImpl implements PhraseService {
 
 
     @Override
-    public AttributesApplyPhraseToUserDTO isPhraseValid(String adverb, String verb, String preposition, String noun) {
+    public boolean isPhraseValid(String adverb, String verb, String preposition, String noun) {
 
         String adverbLowerCase = changeToLowerCase(adverb);
         String verbLowerCase = changeToLowerCase(verb);
@@ -64,10 +64,10 @@ public class PhraseServiceImpl implements PhraseService {
                 isPhrasePreviouslyRejected(adverbLowerCase, verbLowerCase, prepositionLowerCase, nounLowerCase)) {
             log.warn("Phrase is not valid.");
 
-            return constructAttributesApplyPhraseToUserDTO(false,false,true,false);
+            return false;
         }
 
-        return constructAttributesApplyPhraseToUserDTO(false, false, false, false);
+        return true;
     }
 
     public String changeToLowerCase(String word) {
