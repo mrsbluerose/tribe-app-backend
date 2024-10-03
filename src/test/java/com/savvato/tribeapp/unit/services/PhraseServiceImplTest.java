@@ -149,7 +149,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
         });
     }
 
-    // test that false is returned when method is called with a rejected word
     @Test
     public void testIsWordRejectedHappyPath() {
 
@@ -162,8 +161,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         assertFalse(phraseService.isPhraseValid(rejectedWord, rejectedWord, rejectedWord, rejectedWord));
     }
-
-    // test that false is returned when method is called with a rejected phrase
+    
     @Test
     public void testIsPhrasePreviouslyRejectedHappyPath() {
 
