@@ -15,4 +15,6 @@ public interface PhraseService {
     Optional<Long> findPreviouslyApprovedPhraseId(String adverb, String verb, String preposition, String noun);
 
     Optional<Map<PhraseDTO, Integer>> getPhraseInformationByUserId(Long userId);
+
+    AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean success, boolean approved, boolean rejected, boolean inReview);
 }

@@ -279,6 +279,7 @@ public class PhraseServiceImpl implements PhraseService {
                 .build();
     }
 
+    @Override
     public AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean success, boolean approved, boolean rejected, boolean inReview){
         AttributesApplyPhraseToUserDTO rtn = AttributesApplyPhraseToUserDTO.builder()
                 .isSuccess(success)
