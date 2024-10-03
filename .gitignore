@@ -16,3 +16,9 @@ application.properties
 CREATE
 
 __pycache__
+
+.classpath
+.factorypath
+.project
+.settings/
+
