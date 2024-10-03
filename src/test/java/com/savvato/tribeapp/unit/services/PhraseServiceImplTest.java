@@ -53,6 +53,9 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
     @Autowired
     PhraseService phraseService;
 
+    @Autowired
+    PhraseServiceImpl phraseServiceImpl; // for testing helper method
+
     @MockBean
     PhraseRepository phraseRepository;
 
@@ -429,6 +432,48 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
         ArgumentCaptor<String> argNoun = ArgumentCaptor.forClass(String.class);
         verify(toBeReviewedRepository, times(1)).findByAdverbAndVerbAndNounAndPreposition(argAdverb.capture(), argVerb.capture(), argNoun.capture(), argPreposition.capture());
         assertEquals(argPreposition.getValue(), testPrepositionConverted);
+    }
+
+    @Test
+    public void testConstructPhraseDTPFromPhraseInformationWhenPhraseHasAllFourWords() {
+        PhraseDTO expectedDTO = PhraseDTO.builder()
+                .id(PhraseTestConstants.PHRASE1_ID)
+                .adverb(PhraseTestConstants.ADVERB1_WORD)
+                .verb(PhraseTestConstants.VERB1_WORD)
+                .preposition(PhraseTestConstants.PREPOSITION1_WORD)
+                .noun(PhraseTestConstants.NOUN1_WORD)
+                .build();
+
+        when(adverbRepository.findAdverbById(anyLong())).thenReturn(Optional.of(ADVERB1_WORD));
+        when(verbRepository.findVerbById(anyLong())).thenReturn(Optional.of(VERB1_WORD));
+        when(prepositionRepository.findPrepositionById(anyLong())).thenReturn(Optional.of(PREPOSITION1_WORD));
+        when(nounRepository.findNounById(anyLong())).thenReturn(Optional.of(NOUN1_WORD));
+
+        PhraseDTO actualDTO = phraseServiceImpl.constructPhraseDTOFromPhraseInformation(PHRASE1_ID, ADVERB1_ID, VERB1_ID, PREPOSITION1_ID, NOUN1_ID);
+
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
+
+    }
+
+    @Test
+    public void testConstructPhraseDTPFromPhraseInformationWhenPhraseOnlyHasVerbAndNoun() {
+        PhraseDTO expectedDTO = PhraseDTO.builder()
+                .id(PhraseTestConstants.PHRASE1_ID)
+                .adverb("")
+                .verb(PhraseTestConstants.VERB1_WORD)
+                .preposition("")
+                .noun(PhraseTestConstants.NOUN1_WORD)
+                .build();
+
+        when(adverbRepository.findAdverbById(anyLong())).thenReturn(Optional.of(Constants.NULL_VALUE_WORD));
+        when(verbRepository.findVerbById(anyLong())).thenReturn(Optional.of(VERB1_WORD));
+        when(prepositionRepository.findPrepositionById(anyLong())).thenReturn(Optional.of(Constants.NULL_VALUE_WORD));
+        when(nounRepository.findNounById(anyLong())).thenReturn(Optional.of(NOUN1_WORD));
+
+        PhraseDTO actualDTO = phraseServiceImpl.constructPhraseDTOFromPhraseInformation(PHRASE1_ID, Constants.NULL_VALUE_ID, VERB1_ID, Constants.NULL_VALUE_ID, NOUN1_ID);
+
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
+
     }
 
 }
