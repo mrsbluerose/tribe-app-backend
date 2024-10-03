@@ -3,6 +3,7 @@ package com.savvato.tribeapp.unit.services;
 import com.savvato.tribeapp.constants.Constants;
 import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.constants.UserTestConstants;
+import com.savvato.tribeapp.dto.AttributesApplyPhraseToUserDTO;
 import com.savvato.tribeapp.dto.PhraseDTO;
 import com.savvato.tribeapp.dto.projections.PhraseWithUserCountDTO;
 import com.savvato.tribeapp.entities.*;
@@ -10,6 +11,7 @@ import com.savvato.tribeapp.repositories.*;
 import com.savvato.tribeapp.services.PhraseService;
 import com.savvato.tribeapp.services.PhraseServiceImpl;
 import com.savvato.tribeapp.services.UserPhraseService;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -201,10 +203,18 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         Mockito.when(userPhraseRepository.save(Mockito.any())).thenReturn(userPhrase);
 
-        boolean rtn = phraseService.applyPhraseToUser(user1.getId(), "testAdverb", "testVerb", "testPreposition", "testNoun");
+        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
+                .builder()
+                .isSuccess(true)
+                .isApproved(true)
+                .isRejected(false)
+                .isInReview(false)
+                .build();
+
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.applyPhraseToUser(user1.getId(), "testAdverb", "testVerb", "testPreposition", "testNoun");
 
         verify(userPhraseRepository, times(1)).save(Mockito.any());
-        assertTrue(rtn);
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
 
     }
 
@@ -233,10 +243,18 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         Mockito.when(toBeReviewedRepository.findByAdverbAndVerbAndNounAndPreposition(anyString(), anyString(), anyString(), anyString())).thenReturn(Optional.of(toBeReviewed));
 
-        boolean rtn = phraseService.applyPhraseToUser(user1.getId(), testWord, testWord, testWord, testWord);
+        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
+                .builder()
+                .isSuccess(false)
+                .isApproved(false)
+                .isRejected(false)
+                .isInReview(true)
+                .build();
+
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.applyPhraseToUser(user1.getId(), testWord, testWord, testWord, testWord);
 
         verify(reviewSubmittingUserRepository, times(1)).save(Mockito.any());
-        assertFalse(rtn);
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
     }
 
     // Test that reviewSubmittingUserRepository is called once when calling ApplyPhraseToUser and conditions:
@@ -262,12 +280,21 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         Mockito.when(phraseRepository.findByAdverbIdAndVerbIdAndPrepositionIdAndNounId(any(Long.class), any(Long.class), any(Long.class), any(Long.class))).thenReturn(Optional.empty());
 
-        Mockito.when(toBeReviewedRepository.findByAdverbAndVerbAndNounAndPreposition(anyString(), anyString(), anyString(), anyString())).thenReturn(Optional.of(toBeReviewed));
+        Mockito.when(toBeReviewedRepository.findByAdverbAndVerbAndNounAndPreposition(anyString(), anyString(), anyString(), anyString())).thenReturn(Optional.empty());
+        Mockito.when(toBeReviewedRepository.save(Mockito.any())).thenReturn(toBeReviewed);
 
-        boolean rtn = phraseService.applyPhraseToUser(user1.getId(), testWord, testWord, testWord, testWord);
+        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
+                .builder()
+                .isSuccess(false)
+                .isApproved(false)
+                .isRejected(false)
+                .isInReview(true)
+                .build();
+
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.applyPhraseToUser(user1.getId(), testWord, testWord, testWord, testWord);
 
         verify(reviewSubmittingUserRepository, times(1)).save(Mockito.any());
-        assertFalse(rtn);
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
     }
 
     @Test
@@ -343,8 +370,17 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         // Should return false if the phrase has not been seen before
         Mockito.when(toBeReviewedRepository.save(any())).thenReturn(tbrSaved);
-        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverbEmpty, testVerb, testPreposition, testNoun);
-        assertFalse(applyPhraseToUser);
+
+        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
+                .builder()
+                .isSuccess(false)
+                .isApproved(false)
+                .isRejected(false)
+                .isInReview(true)
+                .build();
+
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.applyPhraseToUser(user1.getId(), testAdverbEmpty, testVerb, testPreposition, testNoun);
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
 
         // Empty Adverb should be converted to "nullvalue"
         ArgumentCaptor<String> argAdverb = ArgumentCaptor.forClass(String.class);
@@ -376,8 +412,17 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
         Mockito.when(toBeReviewedRepository.save(any())).thenReturn(tbrSaved);
         when(nounRepository.findByWord(anyString())).thenReturn(Optional.of(new Noun(testNoun)));
         when(verbRepository.findByWord(anyString())).thenReturn(Optional.of(new Verb(testVerb)));
-        boolean applyPhraseToUser = phraseService.applyPhraseToUser(user1.getId(), testAdverb, testVerb, testPrepositionBlank, testNoun);
-        assertFalse(applyPhraseToUser);
+
+        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
+                .builder()
+                .isSuccess(false)
+                .isApproved(false)
+                .isRejected(false)
+                .isInReview(true)
+                .build();
+
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.applyPhraseToUser(user1.getId(), testAdverb, testVerb, testPrepositionBlank, testNoun);
+        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
 
         // Empty Preposition should be converted to "nullvalue"
         ArgumentCaptor<String> argAdverb = ArgumentCaptor.forClass(String.class);
