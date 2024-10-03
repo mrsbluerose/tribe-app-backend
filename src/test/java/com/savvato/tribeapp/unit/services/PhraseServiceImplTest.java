@@ -435,7 +435,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
     }
 
     @Test
-    public void testConstructPhraseDTPFromPhraseInformationWhenPhraseHasAllFourWords() {
+    public void testConstructPhraseDTOFromPhraseInformationWhenPhraseHasAllFourWords() {
         PhraseDTO expectedDTO = PhraseDTO.builder()
                 .id(PhraseTestConstants.PHRASE1_ID)
                 .adverb(PhraseTestConstants.ADVERB1_WORD)
@@ -456,7 +456,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
     }
 
     @Test
-    public void testConstructPhraseDTPFromPhraseInformationWhenPhraseOnlyHasVerbAndNoun() {
+    public void testConstructPhraseDTOFromPhraseInformationWhenPhraseOnlyHasVerbAndNoun() {
         PhraseDTO expectedDTO = PhraseDTO.builder()
                 .id(PhraseTestConstants.PHRASE1_ID)
                 .adverb("")
@@ -473,7 +473,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
         PhraseDTO actualDTO = phraseServiceImpl.constructPhraseDTOFromPhraseInformation(PHRASE1_ID, Constants.NULL_VALUE_ID, VERB1_ID, Constants.NULL_VALUE_ID, NOUN1_ID);
 
         AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
-
+        
     }
 
     @Test
@@ -488,7 +488,7 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
         AttributesApplyPhraseToUserDTO actualDTO = phraseService.constructAttributesApplyPhraseToUserDTO(true, true, true, true);
 
         AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
-        
+
     }
 
 }
