@@ -7,8 +7,8 @@ import jakarta.persistence.*;
 public class NotificationType {
 
     public static final NotificationType ATTRIBUTE_REQUEST_APPROVED = new NotificationType(1L, "Attribute request approved", null);
-    public static final NotificationType ATTRIBUTE_REQUEST_IN_REVIEW = new NotificationType(1L, "Attribute request in review", null);
-    public static final NotificationType ATTRIBUTE_REQUEST_REJECTED = new NotificationType(1L, "Attribute request rejected", null);
+    public static final NotificationType ATTRIBUTE_REQUEST_REJECTED = new NotificationType(2L, "Attribute request rejected", null);
+    public static final NotificationType ATTRIBUTE_REQUEST_IN_REVIEW = new NotificationType(3L, "Attribute request in review", null);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
