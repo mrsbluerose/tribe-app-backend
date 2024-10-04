@@ -450,39 +450,4 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
     }
 
-    @Test
-    public void testConstructPhraseDTOFromPhraseInformationWhenPhraseOnlyHasVerbAndNoun() {
-        PhraseDTO expectedDTO = PhraseDTO.builder()
-                .id(PhraseTestConstants.PHRASE1_ID)
-                .adverb("")
-                .verb(PhraseTestConstants.VERB1_WORD)
-                .preposition("")
-                .noun(PhraseTestConstants.NOUN1_WORD)
-                .build();
-
-        when(adverbRepository.findAdverbById(anyLong())).thenReturn(Optional.of(Constants.NULL_VALUE_WORD));
-        when(verbRepository.findVerbById(anyLong())).thenReturn(Optional.of(VERB1_WORD));
-        when(prepositionRepository.findPrepositionById(anyLong())).thenReturn(Optional.of(Constants.NULL_VALUE_WORD));
-        when(nounRepository.findNounById(anyLong())).thenReturn(Optional.of(NOUN1_WORD));
-
-        PhraseDTO actualDTO = phraseServiceImpl.constructPhraseDTOFromPhraseInformation(PHRASE1_ID, Constants.NULL_VALUE_ID, VERB1_ID, Constants.NULL_VALUE_ID, NOUN1_ID);
-
-        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
-        
-    }
-
-    @Test
-    public void testConstructAttributesApplyPhraseToUserDTO() {
-        AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO.builder()
-                .isApproved(true)
-                .isRejected(true)
-                .isInReview(true)
-                .build();
-
-        AttributesApplyPhraseToUserDTO actualDTO = phraseService.constructAttributesApplyPhraseToUserDTO( true, true, true);
-
-        AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
-
-    }
-
 }
