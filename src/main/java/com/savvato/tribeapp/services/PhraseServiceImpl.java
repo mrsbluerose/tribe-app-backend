@@ -145,7 +145,7 @@ public class PhraseServiceImpl implements PhraseService {
             userPhraseRepository.save(userPhrase);
             log.info("Phrase added to user " + userId);
 
-            return constructAttributesApplyPhraseToUserDTO(true,true,false, false);
+            return constructAttributesApplyPhraseToUserDTO(true,false, false);
 
         } else {
             Optional<ToBeReviewed> toBeReviewedPhrase = toBeReviewedRepository.findByAdverbAndVerbAndNounAndPreposition(adverbLowerCase, verbLowerCase, nounLowerCase, prepositionLowerCase);
@@ -168,7 +168,7 @@ public class PhraseServiceImpl implements PhraseService {
                 log.info("ToBeReviewed phrase has been mapped to user " + userId);
             }
 
-            return constructAttributesApplyPhraseToUserDTO(true,false,false,true);
+            return constructAttributesApplyPhraseToUserDTO(false,false,true);
         }
     }
 
@@ -280,9 +280,8 @@ public class PhraseServiceImpl implements PhraseService {
     }
 
     @Override
-    public AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean success, boolean approved, boolean rejected, boolean inReview){
+    public AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean approved, boolean rejected, boolean inReview){
         AttributesApplyPhraseToUserDTO rtn = AttributesApplyPhraseToUserDTO.builder()
-                .isSuccess(success)
                 .isApproved(approved)
                 .isRejected(rejected)
                 .isInReview(inReview)

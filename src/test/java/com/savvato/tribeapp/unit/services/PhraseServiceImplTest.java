@@ -206,7 +206,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(true)
                 .isRejected(false)
                 .isInReview(false)
@@ -246,7 +245,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -286,7 +284,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -374,7 +371,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -416,7 +412,6 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -479,13 +474,12 @@ public class PhraseServiceImplTest implements UserTestConstants, PhraseTestConst
     @Test
     public void testConstructAttributesApplyPhraseToUserDTO() {
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO.builder()
-                .isSuccess(true)
                 .isApproved(true)
                 .isRejected(true)
                 .isInReview(true)
                 .build();
 
-        AttributesApplyPhraseToUserDTO actualDTO = phraseService.constructAttributesApplyPhraseToUserDTO(true, true, true, true);
+        AttributesApplyPhraseToUserDTO actualDTO = phraseService.constructAttributesApplyPhraseToUserDTO( true, true, true);
 
         AssertionsForClassTypes.assertThat(actualDTO).usingRecursiveComparison().isEqualTo(expectedDTO);
 

@@ -94,7 +94,7 @@ public class AttributesAPIController {
     public ResponseEntity<AttributesApplyPhraseToUserDTO> applyPhraseToUser(@RequestBody @Valid AttributesRequest req) {
 
         if (!phraseService.isPhraseValid(req.adverb, req.verb, req.preposition, req.noun)) {
-          AttributesApplyPhraseToUserDTO rtn = phraseService.constructAttributesApplyPhraseToUserDTO(false, false, true, false);
+          AttributesApplyPhraseToUserDTO rtn = phraseService.constructAttributesApplyPhraseToUserDTO(false,true,false);
           sendNotification(rtn, req.userId);
           return ResponseEntity.status(HttpStatus.OK).body(rtn);
         }
@@ -114,7 +114,7 @@ public class AttributesAPIController {
     }
 
     private void sendNotification(AttributesApplyPhraseToUserDTO dto, Long userId) {
-        if (dto.isSuccess && dto.isApproved) {
+        if (dto.isApproved) {
             notificationService.createNotification(
                     NotificationType.ATTRIBUTE_REQUEST_APPROVED,
                     userId,

@@ -16,5 +16,5 @@ public interface PhraseService {
 
     Optional<Map<PhraseDTO, Integer>> getPhraseInformationByUserId(Long userId);
 
-    AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean success, boolean approved, boolean rejected, boolean inReview);
+    AttributesApplyPhraseToUserDTO constructAttributesApplyPhraseToUserDTO(boolean approved, boolean rejected, boolean inReview);
 }

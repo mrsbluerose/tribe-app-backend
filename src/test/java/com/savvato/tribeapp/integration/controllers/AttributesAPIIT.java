@@ -159,7 +159,6 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(true)
                 .isRejected(false)
                 .isInReview(false)
@@ -180,7 +179,7 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
         ArgumentCaptor<String> notificationTypeNameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> notificationContentCaptor = ArgumentCaptor.forClass(String.class);
 
-        String expectedMessage = "{\"isSuccess\": true, \"isApproved\": true, \"isRejected\": false, \"isInReview\": false}";
+        String expectedMessage = "{\"isApproved\": true, \"isRejected\": false, \"isInReview\": false}";
 
         this.mockMvc
                 .perform(
@@ -223,7 +222,6 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(true)
                 .isApproved(false)
                 .isRejected(false)
                 .isInReview(true)
@@ -246,7 +244,7 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
         String notificationContent =
                 "Your attribute will be reviewed.";
 
-        String expectedMessage = "{\"isSuccess\": true, \"isApproved\": false, \"isRejected\": false, \"isInReview\": true}";
+        String expectedMessage = "{\"isApproved\": false, \"isRejected\": false, \"isInReview\": true}";
 
         this.mockMvc
                 .perform(
@@ -289,7 +287,6 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
 
         AttributesApplyPhraseToUserDTO expectedDTO = AttributesApplyPhraseToUserDTO
                 .builder()
-                .isSuccess(false)
                 .isApproved(false)
                 .isRejected(true)
                 .isInReview(false)
@@ -297,7 +294,7 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
 
         when(phraseService.isPhraseValid(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(false);
-        when((phraseService.constructAttributesApplyPhraseToUserDTO(anyBoolean(),anyBoolean(),anyBoolean(),anyBoolean()))).thenReturn(expectedDTO);
+        when((phraseService.constructAttributesApplyPhraseToUserDTO(anyBoolean(),anyBoolean(),anyBoolean()))).thenReturn(expectedDTO);
         when(notificationService.createNotification(
                 any(NotificationType.class), anyLong(), anyString(), anyString()))
                 .thenReturn(null);
@@ -310,7 +307,7 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
         String notificationContent =
                 "Your attribute was rejected. This attribute is unsuitable and cannot be applied to users.";
 
-        String expectedMessage = "{\"isSuccess\": false, \"isApproved\": false, \"isRejected\": true, \"isInReview\": false}";
+        String expectedMessage = "{\"isApproved\": false, \"isRejected\": true, \"isInReview\": false}";
 
         this.mockMvc
                 .perform(
