@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Creates user_sequence table -->
+    <changeSet author="loretdemolas" id="202407301617-04" context="test">
+
+        <insert tableName="phrase_sequence">
+            <column name="user_id" valueNumeric="2"/>
+            <column name="phrase_id" valueNumeric="3"/>
+            <column name="position" valueNumeric="1"/>
+        </insert>
+
+        <insert tableName="phrase_sequence">
+            <column name="user_id" valueNumeric="2"/>
+            <column name="phrase_id" valueNumeric="2"/>
+            <column name="position" valueNumeric="2"/>
+        </insert>
+
+        <insert tableName="phrase_sequence">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="phrase_id" valueNumeric="1"/>
+            <column name="position" valueNumeric="1"/>
+        </insert>
+
+        <insert tableName="phrase_sequence">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="phrase_id" valueNumeric="2"/>
+            <column name="position" valueNumeric="2"/>
+        </insert>
+
+    </changeSet>
+
+    <changeSet author="loretdemolas" id="202407301617-01" context="test">
+        <sql dbms="mysql">
+            INSERT INTO adverb (word) VALUES ('eagerly');
+            INSERT INTO verb (word) VALUES ('runs');
+            INSERT INTO noun (word) VALUES ('home');
+
+            INSERT INTO verb (word) VALUES ('walks');
+            INSERT INTO noun (word) VALUES ('friend');
+
+            INSERT INTO preposition (word)  VALUES ('with');
+        </sql>
+    </changeSet>
+
+    <changeSet author="loretdemolas" id="202407301617-02" context="test">
+        <sql dbms="mysql">
+            INSERT INTO phrase (id, adverb_id, verb_id, noun_id) VALUES (1, 101, 101, 101);
+            INSERT INTO phrase (id, verb_id, noun_id) VALUES (2, 102, 102);
+            INSERT INTO phrase (id, verb_id, preposition_id, noun_id) VALUES (3, 103, 101, 103);
+        </sql>
+    </changeSet>
+
+    <changeSet author="loretdemolas" id="202407301617-03" context="test">
+        <sql dbms="mysql">
+            INSERT INTO user_phrase (user_id, phrase_id) VALUES (1, 1);
+            INSERT INTO user_phrase (user_id, phrase_id) VALUES (1, 2);
+            INSERT INTO user_phrase (user_id, phrase_id) VALUES (2, 2);
+            INSERT INTO user_phrase (user_id, phrase_id) VALUES (2, 3);
+        </sql>
+    </changeSet>
+
+
+</databaseChangeLog>
