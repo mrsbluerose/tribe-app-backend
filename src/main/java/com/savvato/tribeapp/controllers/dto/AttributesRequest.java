@@ -1,7 +1,15 @@
 package com.savvato.tribeapp.controllers.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 // hold when data is coming in to the request
 @Schema(description = "An attributes request")
 public class AttributesRequest {
@@ -23,4 +31,7 @@ public class AttributesRequest {
 
   @Schema(example = "UNICEF")
   public String noun;
+
+  public List<PhraseSequenceDataRequest> phrases;
+
 }

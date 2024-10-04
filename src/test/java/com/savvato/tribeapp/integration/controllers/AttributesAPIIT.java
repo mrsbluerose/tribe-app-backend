@@ -8,10 +8,13 @@ import com.savvato.tribeapp.constants.PhraseTestConstants;
 import com.savvato.tribeapp.constants.UserTestConstants;
 import com.savvato.tribeapp.controllers.AttributesAPIController;
 import com.savvato.tribeapp.controllers.dto.AttributesRequest;
+import com.savvato.tribeapp.controllers.dto.PhraseSequenceDataRequest;
+import com.savvato.tribeapp.controllers.dto.PhraseSequenceRequest;
 import com.savvato.tribeapp.dto.*;
 import com.savvato.tribeapp.entities.NotificationType;
 import com.savvato.tribeapp.entities.User;
 import com.savvato.tribeapp.services.*;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -418,5 +421,47 @@ public class AttributesAPIIT implements UserTestConstants, PhraseTestConstants {
         List<ToBeReviewedDTO> actualAttributes =
                 gson.fromJson(result.getResponse().getContentAsString(), toBeReviewedDTOListType);
         assertThat(actualAttributes).isEmpty();
+    }
+
+    @Test
+    public void testUPhraseSequences_Success() throws Exception {
+        PhraseSequenceRequest phraseSequenceRequest = new PhraseSequenceRequest(1L, Arrays.asList(
+                new PhraseSequenceDataRequest(1L, 1),
+                new PhraseSequenceDataRequest(2L, 2)
+        ));
+        when(attributesService.loadSequence(any(PhraseSequenceRequest.class))).thenReturn(true);
+        when(GenericResponseService.createDTO(anyBoolean())).thenReturn(GenericResponseDTO.builder().responseMessage("true").build());
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        MvcResult result = mockMvc.perform(post("/api/attributes/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(phraseSequenceRequest))
+                        .header("Authorization", "Bearer " + auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("responseMessage").value("true"))
+                .andReturn();
+
+        Mockito.verify(attributesService).loadSequence(any(PhraseSequenceRequest.class));
+    }
+
+    @Test
+    public void testUPhraseSequences_Failure() throws Exception {
+        PhraseSequenceRequest phraseSequenceRequest = new PhraseSequenceRequest(1L, Arrays.asList(
+                new PhraseSequenceDataRequest(1L, 1),
+                new PhraseSequenceDataRequest(2L, 2)
+        ));
+        when(attributesService.loadSequence(any(PhraseSequenceRequest.class))).thenReturn(false);
+        Mockito.when(userPrincipalService.getUserPrincipalByEmail(Mockito.anyString())).thenReturn(new UserPrincipal(user));
+        String auth = AuthServiceImpl.generateAccessToken(user);
+
+        mockMvc.perform(post("/api/attributes/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(phraseSequenceRequest))
+                        .header("Authorization", "Bearer " + auth))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string(Matchers.isEmptyString()));
+
+        Mockito.verify(attributesService).loadSequence(any(PhraseSequenceRequest.class));
     }
 }
