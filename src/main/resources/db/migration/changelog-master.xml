@@ -47,12 +47,8 @@
     <include file="changelog-202401111012.xml" relativeToChangelogFile="true"/>
     <include file="changelog-202401090508.xml" relativeToChangelogFile="true"/>
     <include file="changelog-202403270537.xml" relativeToChangelogFile="true"/>
-<<<<<<< HEAD
-    <include file="changelog-202410031119.xml" relativeToChangelogFile="true"/>
-
-=======
     <include file="changelog-202404091617.xml" relativeToChangelogFile="true"/>
     <include file="changelog-202405071617.xml" relativeToChangelogFile="true"/>
->>>>>>> feature/review-attributes-page
+    <include file="changelog-202410031119.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
 
