@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet author="haxwell" id="1" context="test">
+        <sql dbms="mysql">
+<!-- wife connecting to chez vous -->
+            INSERT INTO connections (requesting_user_id, to_be_connected_with_user_id, created) VALUES (1, 2, '2024-10-04 08:29:00');
+<!-- wife connecting to Bob, her husband -->
+            INSERT INTO connections (requesting_user_id, to_be_connected_with_user_id, created) VALUES (1, 4, '2024-10-04 08:29:00');
+<!-- chez vous connecting to wife -->
+            INSERT INTO connections (requesting_user_id, to_be_connected_with_user_id, created) VALUES (2, 1, '2024-10-04 08:29:00');
+<!-- Alice connecting to chez vous -->
+            INSERT INTO connections (requesting_user_id, to_be_connected_with_user_id, created) VALUES (3, 2, '2024-10-04 08:29:00');
+        </sql>
+    </changeSet>
+
+    <changeSet id="2" author="haxwell" context="test">
+        <sql dbms="mysql">
+            -- Adverbs
+            INSERT INTO adverb (word) VALUES
+                                          ('enthusiastically'), ('passionately'), ('expertly'), ('avidly'), ('frequently'), ('actively'),
+                                          ('creatively'), ('eagerly');
+
+-- Verbs
+            INSERT INTO verb (word) VALUES
+                                        ('cherishes'), ('explores'), ('tends'), ('reads'), ('enjoys'), ('restores'),
+                                        ('preserves'), ('hikes'), ('listens'), ('experiments'), ('grows'), ('attends'),
+                                        ('collects'), ('mentors'), ('practices'), ('promotes'), ('volunteers'),
+                                        ('networks'), ('solves'), ('paints'), ('competes'), ('curates'), ('supports'),
+                                        ('hosts'), ('visits'), ('discusses'), ('organizes');
+
+-- Prepositions
+            INSERT INTO preposition (word) VALUES
+                                               ('to'), ('on'), ('at'), ('in');
+
+-- Nouns
+            INSERT INTO noun (word) VALUES
+                                        ('heirlooms'), ('shops'), ('garden'), ('fiction'), ('concerts'), ('furniture'),
+                                        ('pieces'), ('weekends'), ('jazz'), ('techniques'), ('tomatoes'), ('festivals'),
+                                        ('cookbooks'), ('cuisine'), ('guitars'), ('centers'), ('people'), ('problems'),
+                                        ('yoga'), ('art'), ('triathlons'), ('podcasts'), ('markets'), ('decor'),
+                                        ('artisans'), ('events'), ('meditation'), ('fishing'), ('chefs'), ('professionals'),
+                                        ('furniture restoration');
+        </sql>
+    </changeSet>
+
+    <changeSet id="3" author="haxwell" context="test">
+        <sql dbms="mysql">
+            -- Create phrases
+            INSERT INTO phrase (adverb_id, verb_id, preposition_id, noun_id)
+            SELECT a.id, v.id, p.id, n.id FROM
+                                              adverb a, verb v, preposition p, noun n
+            WHERE
+                (a.word = 'enthusiastically' AND v.word = 'explores' AND p.word = 'nullvalue' AND n.word = 'shops') OR
+                (a.word = 'nullvalue' AND v.word = 'cherishes' AND p.word = 'nullvalue' AND n.word = 'heirlooms') OR
+                (a.word = 'nullvalue' AND v.word = 'tends' AND p.word = 'to' AND n.word = 'garden') OR
+                (a.word = 'avidly' AND v.word = 'reads' AND p.word = 'nullvalue' AND n.word = 'fiction') OR
+                (a.word = 'nullvalue' AND v.word = 'enjoys' AND p.word = 'nullvalue' AND n.word = 'concerts') OR
+                (a.word = 'expertly' AND v.word = 'restores' AND p.word = 'nullvalue' AND n.word = 'furniture') OR
+                (a.word = 'passionately' AND v.word = 'preserves' AND p.word = 'nullvalue' AND n.word = 'pieces') OR
+                (a.word = 'nullvalue' AND v.word = 'hikes' AND p.word = 'on' AND n.word = 'weekends') OR
+                (a.word = 'nullvalue' AND v.word = 'listens' AND p.word = 'to' AND n.word = 'jazz') OR
+                (a.word = 'passionately' AND v.word = 'discusses' AND p.word = 'nullvalue' AND n.word = 'techniques') OR
+                (a.word = 'eagerly' AND v.word = 'explores' AND p.word = 'nullvalue' AND n.word = 'markets') OR
+                (a.word = 'nullvalue' AND v.word = 'grows' AND p.word = 'nullvalue' AND n.word = 'tomatoes') OR
+                (a.word = 'nullvalue' AND v.word = 'attends' AND p.word = 'nullvalue' AND n.word = 'festivals') OR
+                (a.word = 'nullvalue' AND v.word = 'collects' AND p.word = 'nullvalue' AND n.word = 'cookbooks') OR
+                (a.word = 'nullvalue' AND v.word = 'mentors' AND p.word = 'nullvalue' AND n.word = 'people') OR
+                (a.word = 'nullvalue' AND v.word = 'promotes' AND p.word = 'nullvalue' AND n.word = 'concerts') OR
+                (a.word = 'nullvalue' AND v.word = 'volunteers' AND p.word = 'at' AND n.word = 'centers') OR
+                (a.word = 'actively' AND v.word = 'networks' AND p.word = 'with' AND n.word = 'people') OR
+                (a.word = 'creatively' AND v.word = 'solves' AND p.word = 'nullvalue' AND n.word = 'problems') OR
+                (a.word = 'nullvalue' AND v.word = 'practices' AND p.word = 'nullvalue' AND n.word = 'yoga') OR
+                (a.word = 'nullvalue' AND v.word = 'paints' AND p.word = 'nullvalue' AND n.word = 'art') OR
+                (a.word = 'nullvalue' AND v.word = 'competes' AND p.word = 'in' AND n.word = 'triathlons') OR
+                (a.word = 'nullvalue' AND v.word = 'curates' AND p.word = 'nullvalue' AND n.word = 'decor') OR
+                (a.word = 'nullvalue' AND v.word = 'supports' AND p.word = 'nullvalue' AND n.word = 'artisans') OR
+                (a.word = 'nullvalue' AND v.word = 'hosts' AND p.word = 'nullvalue' AND n.word = 'events') OR
+                (a.word = 'nullvalue' AND v.word = 'visits' AND p.word = 'nullvalue' AND n.word = 'markets') OR
+                (a.word = 'nullvalue' AND v.word = 'enjoys' AND p.word = 'nullvalue' AND n.word = 'fishing') OR
+                (a.word = 'nullvalue' AND v.word = 'mentors' AND p.word = 'nullvalue' AND n.word = 'chefs') OR
+                (a.word = 'nullvalue' AND v.word = 'discusses' AND p.word = 'nullvalue' AND n.word = 'techniques') OR
+                (a.word = 'nullvalue' AND v.word = 'mentors' AND p.word = 'nullvalue' AND n.word = 'professionals') OR
+                (a.word = 'nullvalue' AND v.word = 'practices' AND p.word = 'nullvalue' AND n.word = 'meditation') OR
+                (a.word = 'nullvalue' AND v.word = 'organizes' AND p.word = 'nullvalue' AND n.word = 'events') OR
+                (a.word = 'nullvalue' AND v.word = 'seeks' AND p.word = 'nullvalue' AND n.word = 'furniture restoration') OR
+                (a.word = 'nullvalue' AND v.word = 'listens' AND p.word = 'to' AND n.word = 'podcasts');
+
+-- Link phrases to users
+            INSERT INTO user_phrase (user_id, phrase_id)
+            SELECT u.id, p.id FROM user u, phrase p, adverb a, verb v, preposition pr, noun n
+            WHERE p.adverb_id = a.id AND p.verb_id = v.id AND p.preposition_id = pr.id AND p.noun_id = n.id
+              AND (
+                -- wife
+                (u.id = 1 AND ((v.word = 'organizes' AND n.word = 'events') OR
+                               (a.word = 'enthusiastically' AND v.word = 'explores' AND n.word = 'shops') OR
+                               (v.word = 'tends' AND pr.word = 'to' AND n.word = 'garden'))) OR
+                -- chez vous
+                (u.id = 2 AND ((v.word = 'curates' AND n.word = 'decor') OR
+                               (v.word = 'supports' AND n.word = 'artisans') OR
+                               (v.word = 'hosts' AND n.word = 'events'))) OR
+
+                -- Alice
+                (u.id = 3 AND ((v.word = 'seeks' AND n.word = 'furniture restoration') OR
+                               (a.word = 'passionately' AND v.word = 'preserves' AND n.word = 'pieces') OR
+                               (v.word = 'hikes' AND pr.word = 'on' AND n.word = 'weekends'))) OR
+
+                -- Bob
+                (u.id = 4 AND ((a.word = 'expertly' AND v.word = 'restores' AND n.word = 'furniture') OR
+                               (a.word = 'passionately' AND v.word = 'discusses' AND n.word = 'techniques') OR
+                               (v.word = 'grows' AND n.word = 'tomatoes'))) OR
+                -- Charles
+                (u.id = 5 AND ((v.word = 'visits' AND n.word = 'markets') OR
+                               (v.word = 'enjoys' AND n.word = 'fishing') OR
+                               (v.word = 'mentors' AND n.word = 'chefs'))) OR
+                -- David
+                (u.id = 6 AND ((v.word = 'promotes' AND n.word = 'concerts') OR
+                               (v.word = 'mentors' AND n.word = 'professionals') OR
+                               (v.word = 'practices' AND n.word = 'meditation'))) OR
+                -- Egbert
+                (u.id = 7 AND ((a.word = 'actively' AND v.word = 'networks' AND pr.word = 'with' AND n.word = 'people') OR
+                               (a.word = 'creatively' AND v.word = 'solves' AND n.word = 'problems') OR
+                               (v.word = 'practices' AND n.word = 'yoga') OR
+                               (v.word = 'tends' AND pr.word = 'to' AND n.word = 'garden'))) OR
+                -- Fiona
+                (u.id = 8 AND ((v.word = 'paints' AND n.word = 'art') OR
+                               (v.word = 'competes' AND pr.word = 'in' AND n.word = 'triathlons') OR
+                               (v.word = 'listens' AND pr.word = 'to' AND n.word = 'podcasts'))) OR
+                -- Georgina
+                (u.id = 9 AND ((v.word = 'paints' AND n.word = 'art') OR
+                               (v.word = 'competes' AND pr.word = 'in' AND n.word = 'triathlons') OR
+                               (v.word = 'listens' AND pr.word = 'to' AND n.word = 'podcasts')))
+                );
+        </sql>
+    </changeSet>
+
+    <changeSet id="4" author="haxwell">
+        <sql dbms="mysql">
+            INSERT INTO phrase_sequence (user_id, phrase_id, position)
+            SELECT
+                up.user_id,
+                up.phrase_id,
+                IFNULL(MAX(ps.position), 0) + ROW_NUMBER() OVER (PARTITION BY up.user_id ORDER BY up.phrase_id) AS next_sequence
+            FROM
+                user_phrase up
+                    LEFT JOIN
+                phrase_sequence ps ON up.user_id = ps.user_id
+            WHERE
+                (up.user_id, up.phrase_id) NOT IN (SELECT user_id, phrase_id FROM phrase_sequence)
+            GROUP BY
+                up.user_id, up.phrase_id;
+        </sql>
+    </changeSet>
+
+
+</databaseChangeLog>
